@@ -1,26 +1,23 @@
 'use client'
 
-import { useActionState, useMemo, useState, useRef } from 'react'
+import { useActionState, useEffect, useMemo, useState, useRef } from 'react'
 import { submitUpload } from '@/app/actions/uploads'
 import { createClient } from '@/lib/supabase/client'
 import type { UploadState } from '@/app/actions/uploads'
 
-type UploadType = 'photo' | 'text'
-
 const MAX_MB = 10
 
-// ─── Google 로그인 버튼 ────────────────────────────────────
 function GoogleSignInButton() {
   const [loading, setLoading] = useState(false)
 
   async function handleClick() {
     setLoading(true)
     const supabase = createClient()
+    // 로그인 후 /my 아카이브로 이동
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=/my` },
     })
-    // 리다이렉트되므로 setLoading(false)는 도달하지 않음
   }
 
   return (
@@ -29,7 +26,6 @@ function GoogleSignInButton() {
       disabled={loading}
       className="flex items-center justify-center gap-3 w-full border border-neutral-300 px-4 py-3 text-sm font-medium hover:border-neutral-900 transition-colors disabled:opacity-50"
     >
-      {/* Google 'G' 아이콘 (SVG inline) */}
       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
         <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
@@ -41,8 +37,24 @@ function GoogleSignInButton() {
   )
 }
 
-// ─── 성공 화면 ─────────────────────────────────────────────
-function SuccessView({ isLoggedIn }: { isLoggedIn: boolean }) {
+function SuccessView({
+  isLoggedIn,
+  uploadId,
+}: {
+  isLoggedIn: boolean
+  uploadId?: string
+}) {
+  // 비회원 uploadId를 sessionStorage에 저장 → /my에서 귀속 처리
+  useEffect(() => {
+    if (isLoggedIn || !uploadId) return
+    try {
+      const prev: string[] = JSON.parse(sessionStorage.getItem('pendingUploads') ?? '[]')
+      if (!prev.includes(uploadId)) {
+        sessionStorage.setItem('pendingUploads', JSON.stringify([...prev, uploadId]))
+      }
+    } catch {}
+  }, [isLoggedIn, uploadId])
+
   return (
     <div className="space-y-6">
       <div className="text-center py-6">
@@ -50,15 +62,11 @@ function SuccessView({ isLoggedIn }: { isLoggedIn: boolean }) {
           ✓
         </div>
         <h2 className="text-lg font-bold">업로드 완료!</h2>
-        {isLoggedIn ? (
-          <p className="mt-1 text-sm text-neutral-500">
-            내 아카이브에도 자동으로 저장되었습니다.
-          </p>
-        ) : (
-          <p className="mt-1 text-sm text-neutral-500">
-            이 업로드는 비회원으로 기록되었습니다.
-          </p>
-        )}
+        <p className="mt-1 text-sm text-neutral-500">
+          {isLoggedIn
+            ? '내 아카이브에도 자동으로 저장되었습니다.'
+            : '이 업로드는 비회원으로 기록되었습니다.'}
+        </p>
       </div>
 
       {!isLoggedIn && (
@@ -68,8 +76,7 @@ function SuccessView({ isLoggedIn }: { isLoggedIn: boolean }) {
               내 아카이브에 자동 저장하고 싶으신가요?
             </p>
             <p className="mt-1 text-xs text-neutral-400 leading-relaxed">
-              회원으로 업로드하면 이 전시의 기록이 내 아카이브에 쌓입니다.
-              가입은 Google 계정으로 5초면 완료됩니다.
+              Google 계정으로 5초 만에 가입하면 방문한 전시의 기록이 쌓입니다.
             </p>
           </div>
           <GoogleSignInButton />
@@ -86,7 +93,6 @@ function SuccessView({ isLoggedIn }: { isLoggedIn: boolean }) {
   )
 }
 
-// ─── 업로드 폼 ─────────────────────────────────────────────
 export function UploadForm({
   exhibitionId,
   isLoggedIn,
@@ -103,26 +109,20 @@ export function UploadForm({
     {}
   )
 
-  const [uploadType, setUploadType] = useState<UploadType>('photo')
   const [preview, setPreview] = useState<string | null>(null)
+  const [hasText, setHasText] = useState(false)
+  const [hasPhoto, setHasPhoto] = useState(false)
   const [clientError, setClientError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   if (state.success) {
-    return <SuccessView isLoggedIn={state.isLoggedIn ?? isLoggedIn} />
-  }
-
-  function handleTypeChange(type: UploadType) {
-    setUploadType(type)
-    setPreview(null)
-    setClientError(null)
-    if (fileInputRef.current) fileInputRef.current.value = ''
+    return <SuccessView isLoggedIn={state.isLoggedIn ?? isLoggedIn} uploadId={state.uploadId} />
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     setClientError(null)
     const file = e.target.files?.[0]
-    if (!file) return
+    if (!file) { setHasPhoto(false); setPreview(null); return }
 
     if (!file.type.startsWith('image/')) {
       setClientError('이미지 파일만 업로드할 수 있습니다.')
@@ -134,39 +134,51 @@ export function UploadForm({
       e.target.value = ''
       return
     }
+    setHasPhoto(true)
+    setPreview(URL.createObjectURL(file))
+  }
 
-    const url = URL.createObjectURL(file)
-    setPreview(url)
+  function removePhoto() {
+    setPreview(null)
+    setHasPhoto(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const error = clientError ?? state.error
 
   return (
-    <form action={formAction} className="space-y-6">
-      {/* hidden: upload type */}
-      <input type="hidden" name="type" value={uploadType} />
-
-      {/* 타입 토글 */}
-      <div className="flex border border-neutral-200">
-        {(['photo', 'text'] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => handleTypeChange(t)}
-            className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
-              uploadType === t
-                ? 'bg-neutral-900 text-white'
-                : 'bg-white text-neutral-500 hover:text-neutral-900'
-            }`}
-          >
-            {t === 'photo' ? '사진' : '텍스트'}
-          </button>
-        ))}
-      </div>
-
-      {/* 사진 업로드 영역 */}
-      {uploadType === 'photo' && (
-        <div className="space-y-3">
+    <form
+      action={formAction}
+      className="space-y-6"
+      onSubmit={(e) => {
+        if (!hasPhoto && !hasText) {
+          e.preventDefault()
+          setClientError('사진 또는 텍스트 중 하나는 입력해야 합니다.')
+        }
+      }}
+    >
+      {/* 사진 업로드 */}
+      <div className="space-y-1.5">
+        <label className="block text-xs font-medium uppercase tracking-widest text-neutral-400">
+          사진 <span className="text-neutral-300">(선택)</span>
+        </label>
+        {preview ? (
+          <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={preview}
+              alt="미리보기"
+              className="w-full max-h-72 object-cover border border-neutral-200"
+            />
+            <button
+              type="button"
+              onClick={removePhoto}
+              className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 hover:bg-black transition-colors"
+            >
+              제거
+            </button>
+          </div>
+        ) : (
           <label className="block cursor-pointer group">
             <input
               ref={fileInputRef}
@@ -176,56 +188,38 @@ export function UploadForm({
               className="sr-only"
               onChange={handleFileChange}
             />
-            {preview ? (
-              <div className="relative">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={preview}
-                  alt="미리보기"
-                  className="w-full max-h-72 object-cover border border-neutral-200"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                  <span className="opacity-0 group-hover:opacity-100 text-xs text-white bg-black/60 px-3 py-1 transition-opacity">
-                    다른 사진 선택
-                  </span>
-                </div>
-              </div>
-            ) : (
-              <div className="border-2 border-dashed border-neutral-200 group-hover:border-neutral-400 transition-colors flex flex-col items-center justify-center py-14 gap-2">
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  className="text-neutral-300 group-hover:text-neutral-500 transition-colors"
-                  aria-hidden
-                >
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="17 8 12 3 7 8" />
-                  <line x1="12" y1="3" x2="12" y2="15" />
-                </svg>
-                <span className="text-sm text-neutral-400 group-hover:text-neutral-600 transition-colors">
-                  사진을 선택하거나 드래그하세요
-                </span>
-                <span className="text-xs text-neutral-300">최대 {MAX_MB}MB</span>
-              </div>
-            )}
+            <div className="border-2 border-dashed border-neutral-200 group-hover:border-neutral-400 transition-colors flex flex-col items-center justify-center py-10 gap-2">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neutral-300 group-hover:text-neutral-500 transition-colors" aria-hidden>
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="17 8 12 3 7 8" />
+                <line x1="12" y1="3" x2="12" y2="15" />
+              </svg>
+              <span className="text-sm text-neutral-400 group-hover:text-neutral-600 transition-colors">
+                사진 추가
+              </span>
+              <span className="text-xs text-neutral-300">최대 {MAX_MB}MB</span>
+            </div>
           </label>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* 텍스트 입력 */}
-      {uploadType === 'text' && (
+      <div className="space-y-1.5">
+        <label
+          htmlFor="text_content"
+          className="block text-xs font-medium uppercase tracking-widest text-neutral-400"
+        >
+          텍스트 <span className="text-neutral-300">(선택)</span>
+        </label>
         <textarea
+          id="text_content"
           name="text_content"
-          rows={6}
-          required
+          rows={4}
           placeholder="전시에 남길 글을 자유롭게 써주세요."
-          className="w-full border border-neutral-200 px-3 py-3 text-sm placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none transition-colors resize-none"
+          onChange={(e) => setHasText(e.target.value.trim().length > 0)}
+          className="w-full border border-neutral-200 px-3 py-2.5 text-sm placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none transition-colors resize-none"
         />
-      )}
+      </div>
 
       {/* 캡션 */}
       <div className="space-y-1.5">
@@ -244,7 +238,7 @@ export function UploadForm({
         />
       </div>
 
-      {/* 이름 (비회원만) */}
+      {/* 이름 (비회원) */}
       {!isLoggedIn && (
         <div className="space-y-1.5">
           <label
@@ -263,7 +257,6 @@ export function UploadForm({
         </div>
       )}
 
-      {/* 에러 */}
       {error && (
         <p role="alert" className="text-sm text-red-500">
           {error}
@@ -277,16 +270,6 @@ export function UploadForm({
       >
         {pending ? '업로드 중…' : '업로드하기'}
       </button>
-
-      {!isLoggedIn && (
-        <p className="text-center text-xs text-neutral-400">
-          비회원으로도 업로드할 수 있습니다. 내 아카이브에 저장하려면{' '}
-          <span className="text-neutral-600 underline underline-offset-2 cursor-pointer">
-            로그인
-          </span>
-          이 필요합니다.
-        </p>
-      )}
     </form>
   )
 }

@@ -84,9 +84,22 @@ export type Database = {
           created_at?: string
         }
         Update: {
+          uploader_id?: string | null
+          guest_name?: string | null
+          type?: 'photo' | 'text'
+          storage_path?: string | null
+          text_content?: string | null
           caption?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'uploads_exhibition_id_fkey'
+            columns: ['exhibition_id']
+            isOneToOne: false
+            referencedRelation: 'exhibitions'
+            referencedColumns: ['id']
+          }
+        ]
       }
     }
     Views: Record<never, never>

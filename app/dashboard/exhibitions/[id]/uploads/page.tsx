@@ -1,10 +1,11 @@
 import { notFound, redirect } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { UploadsGrid, type UploadItem } from './UploadsGrid'
 
-function formatDate(iso: string) {
+function toKST(iso: string) {
   return new Date(iso).toLocaleString('ko-KR', {
+    timeZone: 'Asia/Seoul',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
@@ -36,7 +37,7 @@ export default async function ExhibitionUploadsPage({
     .from('exhibitions')
     .select('id, title')
     .eq('id', id)
-    .eq('organizer_id', user!.id)
+    .eq('organizer_id', user.id)
     .single()
 
   if (!exhibition) notFound()
@@ -47,19 +48,27 @@ export default async function ExhibitionUploadsPage({
     .eq('exhibition_id', id)
     .order('created_at', { ascending: false })
 
-  const items = uploads ?? []
-  const photoCount = items.filter((u) => u.type === 'photo').length
-  const textCount = items.filter((u) => u.type === 'text').length
+  const raw = uploads ?? []
+  const photoCount = raw.filter((u) => u.type === 'photo').length
+  const textCount = raw.filter((u) => u.type === 'text').length
 
-  function getPublicUrl(path: string | null): string {
-    if (!path) return ''
-    const { data } = supabase.storage.from('uploads').getPublicUrl(path)
-    return data.publicUrl
-  }
+  const items: UploadItem[] = raw.map((u) => {
+    const { data } = u.storage_path
+      ? supabase.storage.from('uploads').getPublicUrl(u.storage_path)
+      : { data: { publicUrl: null } }
+    return {
+      id: u.id,
+      type: u.type as 'photo' | 'text',
+      publicUrl: data?.publicUrl ?? null,
+      text_content: u.text_content,
+      caption: u.caption,
+      uploaderLabel: uploaderLabel(u),
+      createdAt: toKST(u.created_at),
+    }
+  })
 
   return (
     <div>
-      {/* 상단 네비게이션 */}
       <div className="flex items-center gap-2 mb-8">
         <Link
           href={`/dashboard/exhibitions/${id}`}
@@ -69,7 +78,6 @@ export default async function ExhibitionUploadsPage({
         </Link>
       </div>
 
-      {/* 헤더 */}
       <div className="flex items-end justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">업로드 목록</h1>
@@ -87,59 +95,7 @@ export default async function ExhibitionUploadsPage({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {items.map((upload) => {
-            if (upload.type === 'photo') {
-              const url = getPublicUrl(upload.storage_path)
-              return (
-                <div key={upload.id} className="group relative aspect-square bg-neutral-100 overflow-hidden">
-                  {url && (
-                    <Image
-                      src={url}
-                      alt={upload.caption ?? '업로드 사진'}
-                      fill
-                      sizes="(max-width: 768px) 50vw, 33vw"
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  )}
-                  {/* 호버 오버레이 */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-200 flex flex-col justify-end p-3 opacity-0 group-hover:opacity-100">
-                    {upload.caption && (
-                      <p className="text-white text-xs font-medium leading-snug line-clamp-2">
-                        {upload.caption}
-                      </p>
-                    )}
-                    <p className="text-white/70 text-xs mt-1">
-                      {uploaderLabel(upload)} · {formatDate(upload.created_at)}
-                    </p>
-                  </div>
-                </div>
-              )
-            }
-
-            // 텍스트 카드
-            return (
-              <div
-                key={upload.id}
-                className="aspect-square bg-neutral-50 border border-neutral-200 p-4 flex flex-col justify-between overflow-hidden"
-              >
-                <p className="text-sm text-neutral-800 leading-relaxed line-clamp-6 flex-1">
-                  {upload.text_content}
-                </p>
-                <div className="mt-2 pt-2 border-t border-neutral-200">
-                  {upload.caption && (
-                    <p className="text-xs text-neutral-500 italic truncate mb-0.5">
-                      {upload.caption}
-                    </p>
-                  )}
-                  <p className="text-xs text-neutral-400">
-                    {uploaderLabel(upload)} · {formatDate(upload.created_at)}
-                  </p>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        <UploadsGrid items={items} />
       )}
     </div>
   )
