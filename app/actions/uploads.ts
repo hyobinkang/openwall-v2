@@ -1,5 +1,6 @@
 'use server'
 
+import { randomUUID } from 'crypto'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 export type UploadState = {
@@ -54,9 +55,14 @@ export async function submitUpload(
   // 사진이 있으면 type='photo', 텍스트만 있으면 type='text'
   const type = hasPhoto ? 'photo' : 'text'
 
-  const { data: inserted, error: dbError } = await supabase
+  // INSERT 전에 ID를 미리 생성 — 비로그인 사용자는 RLS SELECT 정책에 막혀
+  // insert().select()로 row를 돌려받지 못하므로, ID를 직접 생성해 반환한다.
+  const uploadId = randomUUID()
+
+  const { error: dbError } = await supabase
     .from('uploads')
     .insert({
+      id: uploadId,
       exhibition_id: exhibitionId,
       uploader_id: user?.id ?? null,
       guest_name: guestName,
@@ -65,8 +71,6 @@ export async function submitUpload(
       text_content: textContent,
       caption,
     })
-    .select('*')
-    .single()
 
   if (dbError) {
     if (storagePath) await supabase.storage.from('uploads').remove([storagePath])
@@ -76,7 +80,7 @@ export async function submitUpload(
   return {
     success: true,
     isLoggedIn: !!user,
-    uploadId: (inserted as { id: string } | null)?.id,
+    uploadId,
   }
 }
 
