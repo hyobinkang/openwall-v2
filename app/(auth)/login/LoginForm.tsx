@@ -1,0 +1,76 @@
+'use client'
+
+import { useActionState } from 'react'
+import Link from 'next/link'
+import { login } from '@/app/actions/auth'
+import type { AuthState } from '@/app/actions/auth'
+
+const initial: AuthState = {}
+
+export function LoginForm() {
+  const [state, formAction, pending] = useActionState(login, initial)
+
+  return (
+    <form action={formAction} className="space-y-5">
+      <div className="space-y-1">
+        <label
+          htmlFor="email"
+          className="block text-xs font-medium uppercase tracking-widest text-neutral-400"
+        >
+          이메일
+        </label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          placeholder="hello@example.com"
+          className="w-full border border-neutral-200 bg-white px-3 py-2.5 text-sm placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none transition-colors"
+        />
+      </div>
+
+      <div className="space-y-1">
+        <label
+          htmlFor="password"
+          className="block text-xs font-medium uppercase tracking-widest text-neutral-400"
+        >
+          비밀번호
+        </label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          required
+          autoComplete="current-password"
+          placeholder="••••••••"
+          className="w-full border border-neutral-200 bg-white px-3 py-2.5 text-sm placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none transition-colors"
+        />
+      </div>
+
+      {state?.error && (
+        <p role="alert" className="text-sm text-red-500">
+          {state.error}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        disabled={pending}
+        className="w-full bg-neutral-900 py-3 text-sm font-medium tracking-wide text-white transition-colors hover:bg-black disabled:opacity-40"
+      >
+        {pending ? '로그인 중…' : '로그인'}
+      </button>
+
+      <p className="text-center text-sm text-neutral-400">
+        계정이 없으신가요?{' '}
+        <Link
+          href="/signup"
+          className="text-neutral-900 underline underline-offset-2 hover:text-black"
+        >
+          가입하기
+        </Link>
+      </p>
+    </form>
+  )
+}
