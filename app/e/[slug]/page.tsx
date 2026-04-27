@@ -51,7 +51,7 @@ export default async function ExhibitionVisitorPage({
     <div className="min-h-screen bg-white">
       {/* 헤더 */}
       <header className="border-b border-neutral-100 px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="text-sm font-bold tracking-tight">
+        <Link href={user ? '/my' : '/'} className="text-sm font-bold tracking-tight">
           Openwall
         </Link>
         {user ? (

@@ -82,10 +82,10 @@ export default async function MyPage() {
                 <div className="flex items-baseline justify-between mb-4">
                   <h2 className="text-base font-semibold">{group.title}</h2>
                   <Link
-                    href={`/e/${group.slug}`}
+                    href={`/e/${group.slug}/gallery`}
                     className="text-xs text-neutral-400 hover:text-neutral-900 transition-colors"
                   >
-                    전시 페이지 →
+                    전체 업로드 보기 →
                   </Link>
                 </div>
 
