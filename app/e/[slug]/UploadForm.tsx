@@ -106,12 +106,16 @@ function SuccessView({
   )
 }
 
+type NameMode = 'member' | 'anonymous' | 'nickname'
+
 export function UploadForm({
   exhibitionId,
   isLoggedIn,
+  userName,
 }: {
   exhibitionId: string
   isLoggedIn: boolean
+  userName?: string | null
 }) {
   const boundAction = useMemo(
     () => submitUpload.bind(null, exhibitionId),
@@ -126,6 +130,7 @@ export function UploadForm({
   const [hasText, setHasText] = useState(false)
   const [hasPhoto, setHasPhoto] = useState(false)
   const [clientError, setClientError] = useState<string | null>(null)
+  const [nameMode, setNameMode] = useState<NameMode>('member')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   if (state.success) {
@@ -235,20 +240,66 @@ export function UploadForm({
       </div>
 
       {/* 이름 */}
-      <div className="space-y-1.5">
-        <label
-          htmlFor="guest_name"
-          className="block text-xs font-medium uppercase tracking-widest text-neutral-400"
-        >
+      <div className="space-y-2.5">
+        <span className="block text-xs font-medium uppercase tracking-widest text-neutral-400">
           이름 <span className="text-neutral-300">(선택)</span>
-        </label>
-        <input
-          id="guest_name"
-          name="guest_name"
-          type="text"
-          placeholder="이름을 입력하세요 (선택사항)"
-          className="w-full border border-neutral-200 px-3 py-2.5 text-sm placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none transition-colors"
-        />
+        </span>
+
+        {isLoggedIn ? (
+          <>
+            {/* 라디오 버튼 */}
+            <div className="flex flex-wrap gap-4">
+              {(
+                [
+                  { value: 'member', label: '회원명' },
+                  { value: 'anonymous', label: '익명으로 남기기' },
+                  { value: 'nickname', label: '닉네임으로 남기기' },
+                ] as { value: NameMode; label: string }[]
+              ).map(({ value, label }) => (
+                <label key={value} className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="_name_mode"
+                    value={value}
+                    checked={nameMode === value}
+                    onChange={() => setNameMode(value)}
+                    className="accent-neutral-900"
+                  />
+                  <span className="text-sm text-neutral-700">{label}</span>
+                </label>
+              ))}
+            </div>
+
+            {/* 회원명 표시 (읽기 전용) */}
+            {nameMode === 'member' && (
+              <>
+                <input type="hidden" name="guest_name" value={userName ?? ''} />
+                <p className="text-sm text-neutral-500 border border-neutral-100 bg-neutral-50 px-3 py-2.5">
+                  {userName ?? '(이름 없음)'}
+                </p>
+              </>
+            )}
+
+            {/* 닉네임 직접 입력 */}
+            {nameMode === 'nickname' && (
+              <input
+                name="guest_name"
+                type="text"
+                placeholder="닉네임을 입력하세요"
+                className="w-full border border-neutral-200 px-3 py-2.5 text-sm placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none transition-colors"
+              />
+            )}
+
+            {/* 익명: guest_name 미전송 → null로 저장 */}
+          </>
+        ) : (
+          <input
+            name="guest_name"
+            type="text"
+            placeholder="닉네임을 입력하세요 (미입력 시 익명으로 표시)"
+            className="w-full border border-neutral-200 px-3 py-2.5 text-sm placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none transition-colors"
+          />
+        )}
       </div>
 
       {error && (

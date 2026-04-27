@@ -46,6 +46,10 @@ export default async function ExhibitionVisitorPage({
   if (!exhibition) notFound()
 
   const { data: { user } } = await supabase.auth.getUser()
+  const userName: string | null =
+    user?.user_metadata?.name ??
+    user?.user_metadata?.full_name ??
+    (user?.email ? user.email.split('@')[0] : null)
 
   return (
     <div className="min-h-screen bg-white">
@@ -95,7 +99,7 @@ export default async function ExhibitionVisitorPage({
             <p className="text-sm text-neutral-400">준비 중인 전시입니다.</p>
           </div>
         ) : (
-          <UploadForm exhibitionId={exhibition.id} isLoggedIn={!!user} />
+          <UploadForm exhibitionId={exhibition.id} isLoggedIn={!!user} userName={userName} />
         )}
       </main>
     </div>
