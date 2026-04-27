@@ -89,14 +89,20 @@ export async function claimUploads(uploadIds: string[]): Promise<void> {
   if (!uploadIds.length) return
 
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
+  console.log('[claimUploads] user:', user?.id ?? null, 'userError:', userError?.message ?? null)
+  if (!user) {
+    console.log('[claimUploads] 유저 없음 — 종료')
+    return
+  }
 
-  // RLS를 우회하는 service client로 익명 업로드만 귀속 (uploader_id가 null인 것만 업데이트)
   const service = await createServiceClient()
-  await service
+  const { data, error, count } = await service
     .from('uploads')
     .update({ uploader_id: user.id, guest_name: null })
     .in('id', uploadIds)
     .is('uploader_id', null)
+    .select()
+
+  console.log('[claimUploads] UPDATE 결과 — count:', count, 'data:', data, 'error:', error?.message ?? null)
 }
