@@ -69,11 +69,18 @@ function SuccessView({
         </p>
       </div>
 
-      {!isLoggedIn && (
+      {isLoggedIn ? (
+        <a
+          href="/my"
+          className="flex items-center justify-center w-full bg-neutral-900 py-3 text-sm font-medium tracking-wide text-white hover:bg-black transition-colors"
+        >
+          내 아카이브에서 확인하기
+        </a>
+      ) : (
         <div className="border border-neutral-200 px-5 py-6 space-y-4">
           <div>
             <p className="text-sm font-medium text-neutral-900">
-              내 아카이브에 자동 저장하고 싶으신가요?
+              내 아카이브에 저장하려면 Google로 로그인하세요
             </p>
             <p className="mt-1 text-xs text-neutral-400 leading-relaxed">
               Google 계정으로 5초 만에 가입하면 방문한 전시의 기록이 쌓입니다.

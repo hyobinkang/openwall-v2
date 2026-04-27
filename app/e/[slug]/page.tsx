@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { UploadForm } from './UploadForm'
 
@@ -49,10 +50,19 @@ export default async function ExhibitionVisitorPage({
   return (
     <div className="min-h-screen bg-white">
       {/* 헤더 */}
-      <header className="border-b border-neutral-100 px-6 py-4">
-        <span className="text-xs tracking-[0.25em] uppercase text-neutral-400">
+      <header className="border-b border-neutral-100 px-6 py-4 flex items-center justify-between">
+        <Link href="/" className="text-sm font-bold tracking-tight">
           Openwall
-        </span>
+        </Link>
+        {user ? (
+          <Link href="/my" className="text-xs text-neutral-500 hover:text-neutral-900 transition-colors">
+            내 페이지
+          </Link>
+        ) : (
+          <Link href="/login" className="text-xs text-neutral-500 hover:text-neutral-900 transition-colors">
+            로그인
+          </Link>
+        )}
       </header>
 
       <main className="max-w-lg mx-auto px-6 py-12">
