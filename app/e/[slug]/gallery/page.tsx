@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { UploadsGrid, type UploadItem } from '@/app/dashboard/exhibitions/[id]/uploads/UploadsGrid'
@@ -38,6 +39,8 @@ export default async function ExhibitionGalleryPage({
 
   if (!exhibition) notFound()
 
+  const { data: { user } } = await supabase.auth.getUser()
+
   const { data: uploads } = await supabase
     .from('uploads')
     .select('id, type, storage_path, text_content, caption, guest_name, uploader_id, created_at')
@@ -46,7 +49,7 @@ export default async function ExhibitionGalleryPage({
 
   const raw = uploads ?? []
 
-  const items: UploadItem[] = raw.map((u) => {
+  function toItem(u: typeof raw[number]): UploadItem {
     const { data } = u.storage_path
       ? supabase.storage.from('uploads').getPublicUrl(u.storage_path)
       : { data: { publicUrl: null } }
@@ -59,7 +62,16 @@ export default async function ExhibitionGalleryPage({
       uploaderLabel: uploaderLabel(u),
       createdAt: toKST(u.created_at),
     }
-  })
+  }
+
+  const myUploads = user ? raw.filter((u) => u.uploader_id === user.id) : []
+  const allItems: UploadItem[] = raw.map(toItem)
+
+  function getPublicUrl(path: string | null): string | null {
+    if (!path) return null
+    const { data } = supabase.storage.from('uploads').getPublicUrl(path)
+    return data.publicUrl
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -73,20 +85,74 @@ export default async function ExhibitionGalleryPage({
       <main className="max-w-3xl mx-auto px-5 py-10">
         <div className="mb-6">
           <h1 className="text-xl font-bold tracking-tight">{exhibition.title}</h1>
-          <p className="mt-1 text-sm text-neutral-400">
-            업로드 {items.length}개
-          </p>
+          <p className="mt-1 text-sm text-neutral-400">업로드 {allItems.length}개</p>
         </div>
 
-        {items.length === 0 ? (
+        {/* 내가 남긴 기록 */}
+        {myUploads.length > 0 && (
+          <section className="mb-10">
+            <h2 className="text-sm font-semibold mb-3">내가 남긴 기록</h2>
+            <div className="space-y-2">
+              {myUploads.map((u) => {
+                const url = getPublicUrl(u.storage_path)
+                return (
+                  <div key={u.id} className="border border-neutral-200 flex gap-4 p-3">
+                    {u.type === 'photo' && url && (
+                      <div className="relative w-16 h-16 flex-shrink-0 bg-neutral-100">
+                        <Image
+                          src={url}
+                          alt={u.caption ?? '업로드 사진'}
+                          fill
+                          sizes="64px"
+                          className="object-cover"
+                        />
+                      </div>
+                    )}
+                    {u.type === 'text' && (
+                      <div className="w-16 h-16 flex-shrink-0 bg-neutral-50 flex items-center justify-center p-1.5">
+                        <p className="text-xs text-neutral-500 leading-relaxed line-clamp-4 text-center">
+                          {u.text_content}
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0 flex flex-col justify-between">
+                      <div>
+                        {u.text_content && u.type === 'photo' && (
+                          <p className="text-sm text-neutral-800 leading-relaxed line-clamp-2">
+                            {u.text_content}
+                          </p>
+                        )}
+                        {u.text_content && u.type === 'text' && (
+                          <p className="text-sm text-neutral-800 leading-relaxed line-clamp-2">
+                            {u.text_content}
+                          </p>
+                        )}
+                        {u.caption && (
+                          <p className="mt-0.5 text-xs text-neutral-500 italic line-clamp-1">
+                            {u.caption}
+                          </p>
+                        )}
+                      </div>
+                      <p className="text-xs text-neutral-400 mt-1">{toKST(u.created_at)}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )}
+
+        {/* 전체 업로드 */}
+        {allItems.length === 0 ? (
           <div className="border border-dashed border-neutral-200 py-24 text-center">
             <p className="text-sm text-neutral-400">아직 업로드된 항목이 없습니다.</p>
           </div>
         ) : (
-          <UploadsGrid items={items} />
+          <UploadsGrid items={allItems} />
         )}
 
-        {exhibition.status === 'active' && (
+        {/* 비로그인 또는 업로드 없는 로그인 유저 → 업로드 유도 */}
+        {exhibition.status === 'active' && myUploads.length === 0 && (
           <div className="mt-10 text-center">
             <Link
               href={`/e/${slug}`}

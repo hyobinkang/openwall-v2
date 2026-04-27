@@ -109,8 +109,10 @@ export default async function MyPage() {
                           </div>
                         )}
                         {u.type === 'text' && (
-                          <div className="w-20 h-20 flex-shrink-0 bg-neutral-50 flex items-center justify-center">
-                            <span className="text-xs text-neutral-300 select-none">TEXT</span>
+                          <div className="w-20 h-20 flex-shrink-0 bg-neutral-50 flex items-center justify-center p-2">
+                            <p className="text-xs text-neutral-500 leading-relaxed line-clamp-4 text-center">
+                              {u.text_content}
+                            </p>
                           </div>
                         )}
 
