@@ -46,13 +46,19 @@ function SuccessView({
 }) {
   // 비회원 uploadId를 sessionStorage에 저장 → /my에서 귀속 처리
   useEffect(() => {
-    if (isLoggedIn || !uploadId) return
+    console.log('[UploadForm] SuccessView mounted', { isLoggedIn, uploadId })
+    if (isLoggedIn || !uploadId) {
+      console.log('[UploadForm] sessionStorage 저장 건너뜀 (isLoggedIn 또는 uploadId 없음)')
+      return
+    }
     try {
       const prev: string[] = JSON.parse(sessionStorage.getItem('pendingUploads') ?? '[]')
-      if (!prev.includes(uploadId)) {
-        sessionStorage.setItem('pendingUploads', JSON.stringify([...prev, uploadId]))
-      }
-    } catch {}
+      const next = prev.includes(uploadId) ? prev : [...prev, uploadId]
+      sessionStorage.setItem('pendingUploads', JSON.stringify(next))
+      console.log('[UploadForm] sessionStorage pendingUploads 저장 완료:', next)
+    } catch (e) {
+      console.error('[UploadForm] sessionStorage 저장 실패:', e)
+    }
   }, [isLoggedIn, uploadId])
 
   return (
