@@ -133,6 +133,11 @@ export function UploadForm({
   const [nameMode, setNameMode] = useState<NameMode>('member')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // 디버그: 브라우저 콘솔에서 isLoggedIn 값 확인
+  useEffect(() => {
+    console.log('[UploadForm] isLoggedIn:', isLoggedIn, '| userName:', userName)
+  }, [isLoggedIn, userName])
+
   if (state.success) {
     return <SuccessView isLoggedIn={state.isLoggedIn ?? isLoggedIn} uploadId={state.uploadId} />
   }

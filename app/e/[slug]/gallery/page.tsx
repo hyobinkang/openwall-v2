@@ -41,6 +41,20 @@ export default async function ExhibitionGalleryPage({
 
   const { data: { user } } = await supabase.auth.getUser()
 
+  let myProfileName = '회원'
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', user.id)
+      .single()
+    myProfileName = profile?.name ?? user.email?.split('@')[0] ?? '회원'
+  }
+
+  function myDisplayName(u: { guest_name: string | null }): string {
+    return u.guest_name || myProfileName
+  }
+
   const { data: uploads } = await supabase
     .from('uploads')
     .select('id, type, storage_path, text_content, caption, guest_name, uploader_id, created_at')
@@ -105,10 +119,9 @@ export default async function ExhibitionGalleryPage({
                           {u.text_content}
                         </p>
                       )}
-                      {u.caption && (
-                        <p className="mt-1 text-xs text-neutral-500 italic line-clamp-1">{u.caption}</p>
-                      )}
-                      <p className="mt-1.5 text-xs text-neutral-400">{toKST(u.created_at)}</p>
+                      <p className="mt-1.5 text-xs text-neutral-400">
+                        {myDisplayName(u)} · {toKST(u.created_at)}
+                      </p>
                     </div>
                   )
                 }
@@ -120,7 +133,7 @@ export default async function ExhibitionGalleryPage({
                       <div className="relative w-16 h-16 flex-shrink-0 bg-neutral-100">
                         <Image
                           src={url}
-                          alt={u.caption ?? '업로드 사진'}
+                          alt="업로드 사진"
                           fill
                           sizes="64px"
                           className="object-cover"
@@ -128,17 +141,14 @@ export default async function ExhibitionGalleryPage({
                       </div>
                     )}
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
-                      <div>
-                        {u.text_content && (
-                          <p className="text-sm text-neutral-800 leading-relaxed line-clamp-2 break-words">
-                            {u.text_content}
-                          </p>
-                        )}
-                        {u.caption && (
-                          <p className="mt-0.5 text-xs text-neutral-500 italic line-clamp-1">{u.caption}</p>
-                        )}
-                      </div>
-                      <p className="text-xs text-neutral-400 mt-1">{toKST(u.created_at)}</p>
+                      {u.text_content && (
+                        <p className="text-sm text-neutral-800 leading-relaxed line-clamp-2 break-words">
+                          {u.text_content}
+                        </p>
+                      )}
+                      <p className="text-xs text-neutral-400 mt-1">
+                        {myDisplayName(u)} · {toKST(u.created_at)}
+                      </p>
                     </div>
                   </div>
                 )

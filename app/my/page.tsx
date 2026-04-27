@@ -19,11 +19,24 @@ export default async function MyPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: uploads } = await supabase
-    .from('uploads')
-    .select('id, type, storage_path, text_content, caption, created_at, exhibition_id, exhibitions(id, title, slug)')
-    .eq('uploader_id', user.id)
-    .order('created_at', { ascending: false })
+  const [{ data: uploads }, { data: profile }] = await Promise.all([
+    supabase
+      .from('uploads')
+      .select('id, type, storage_path, text_content, guest_name, created_at, exhibition_id, exhibitions(id, title, slug)')
+      .eq('uploader_id', user.id)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', user.id)
+      .single(),
+  ])
+
+  const myProfileName = profile?.name ?? user.email?.split('@')[0] ?? '회원'
+
+  function displayName(upload: { guest_name: string | null }): string {
+    return upload.guest_name || myProfileName
+  }
 
   const raw = uploads ?? []
 
@@ -91,45 +104,47 @@ export default async function MyPage() {
 
                 <div className="space-y-3">
                   {group.items.map((u) => {
-                    const url = getPublicUrl(u.storage_path)
+                    const url = u.type === 'photo' ? getPublicUrl(u.storage_path) : null
+
+                    // 텍스트 전용 카드
+                    if (u.type === 'text') {
+                      return (
+                        <div key={u.id} className="border border-neutral-100 px-4 py-3">
+                          {u.text_content && (
+                            <p className="text-sm text-neutral-800 leading-relaxed line-clamp-3 break-words">
+                              {u.text_content}
+                            </p>
+                          )}
+                          <p className="text-xs text-neutral-400 mt-1.5">
+                            {displayName(u)} · {toKST(u.created_at)}
+                          </p>
+                        </div>
+                      )
+                    }
+
+                    // 사진 카드
                     return (
-                      <div
-                        key={u.id}
-                        className="border border-neutral-100 flex gap-4 p-3"
-                      >
-                        {u.type === 'photo' && url && (
+                      <div key={u.id} className="border border-neutral-100 flex gap-4 p-3">
+                        {url && (
                           <div className="relative w-20 h-20 flex-shrink-0 bg-neutral-100">
                             <Image
                               src={url}
-                              alt={u.caption ?? '업로드 사진'}
+                              alt="업로드 사진"
                               fill
                               sizes="80px"
                               className="object-cover"
                             />
                           </div>
                         )}
-                        {u.type === 'text' && (
-                          <div className="w-20 h-20 flex-shrink-0 bg-neutral-50 flex items-center justify-center p-2">
-                            <p className="text-xs text-neutral-500 leading-relaxed line-clamp-4 text-center">
+                        <div className="flex-1 min-w-0 flex flex-col justify-between">
+                          {u.text_content && (
+                            <p className="text-sm text-neutral-800 leading-relaxed line-clamp-2 break-words">
                               {u.text_content}
                             </p>
-                          </div>
-                        )}
-
-                        <div className="flex-1 min-w-0 flex flex-col justify-between">
-                          <div>
-                            {u.text_content && (
-                              <p className="text-sm text-neutral-800 leading-relaxed line-clamp-2">
-                                {u.text_content}
-                              </p>
-                            )}
-                            {u.caption && (
-                              <p className="mt-1 text-xs text-neutral-500 italic line-clamp-1">
-                                {u.caption}
-                              </p>
-                            )}
-                          </div>
-                          <p className="text-xs text-neutral-400 mt-1">{toKST(u.created_at)}</p>
+                          )}
+                          <p className="text-xs text-neutral-400 mt-1">
+                            {displayName(u)} · {toKST(u.created_at)}
+                          </p>
                         </div>
                       </div>
                     )
