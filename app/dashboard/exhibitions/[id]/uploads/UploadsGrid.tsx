@@ -59,7 +59,7 @@ function Modal({ item, onClose }: { item: UploadItem; onClose: () => void }) {
 
           {/* 텍스트 */}
           {item.text_content && (
-            <p className="text-sm text-neutral-800 leading-relaxed whitespace-pre-wrap">
+            <p className="text-sm text-neutral-800 leading-relaxed whitespace-pre-wrap break-words">
               {item.text_content}
             </p>
           )}

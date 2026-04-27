@@ -94,10 +94,29 @@ export default async function ExhibitionGalleryPage({
             <h2 className="text-sm font-semibold mb-3">내가 남긴 기록</h2>
             <div className="space-y-2">
               {myUploads.map((u) => {
-                const url = getPublicUrl(u.storage_path)
+                const url = u.type === 'photo' ? getPublicUrl(u.storage_path) : null
+
+                // 텍스트 전용 카드
+                if (u.type === 'text') {
+                  return (
+                    <div key={u.id} className="border border-neutral-100 px-4 py-3">
+                      {u.text_content && (
+                        <p className="text-sm text-neutral-800 leading-relaxed line-clamp-3 break-words">
+                          {u.text_content}
+                        </p>
+                      )}
+                      {u.caption && (
+                        <p className="mt-1 text-xs text-neutral-500 italic line-clamp-1">{u.caption}</p>
+                      )}
+                      <p className="mt-1.5 text-xs text-neutral-400">{toKST(u.created_at)}</p>
+                    </div>
+                  )
+                }
+
+                // 사진 카드
                 return (
-                  <div key={u.id} className="border border-neutral-200 flex gap-4 p-3">
-                    {u.type === 'photo' && url && (
+                  <div key={u.id} className="border border-neutral-100 flex gap-4 p-3">
+                    {url && (
                       <div className="relative w-16 h-16 flex-shrink-0 bg-neutral-100">
                         <Image
                           src={url}
@@ -108,29 +127,15 @@ export default async function ExhibitionGalleryPage({
                         />
                       </div>
                     )}
-                    {u.type === 'text' && (
-                      <div className="w-16 h-16 flex-shrink-0 bg-neutral-50 flex items-center justify-center p-1.5">
-                        <p className="text-xs text-neutral-500 leading-relaxed line-clamp-4 text-center">
-                          {u.text_content}
-                        </p>
-                      </div>
-                    )}
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       <div>
-                        {u.text_content && u.type === 'photo' && (
-                          <p className="text-sm text-neutral-800 leading-relaxed line-clamp-2">
-                            {u.text_content}
-                          </p>
-                        )}
-                        {u.text_content && u.type === 'text' && (
-                          <p className="text-sm text-neutral-800 leading-relaxed line-clamp-2">
+                        {u.text_content && (
+                          <p className="text-sm text-neutral-800 leading-relaxed line-clamp-2 break-words">
                             {u.text_content}
                           </p>
                         )}
                         {u.caption && (
-                          <p className="mt-0.5 text-xs text-neutral-500 italic line-clamp-1">
-                            {u.caption}
-                          </p>
+                          <p className="mt-0.5 text-xs text-neutral-500 italic line-clamp-1">{u.caption}</p>
                         )}
                       </div>
                       <p className="text-xs text-neutral-400 mt-1">{toKST(u.created_at)}</p>
