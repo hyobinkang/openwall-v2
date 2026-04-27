@@ -21,10 +21,7 @@ export async function submitUpload(
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const caption = (formData.get('caption') as string)?.trim() || null
-  const guestName = !user
-    ? (formData.get('guest_name') as string)?.trim() || null
-    : null
+  const guestName = (formData.get('guest_name') as string)?.trim() || null
   const textContent = (formData.get('text_content') as string)?.trim() || null
 
   const file = formData.get('photo') as File | null
@@ -70,7 +67,6 @@ export async function submitUpload(
       type,
       storage_path: storagePath,
       text_content: textContent,
-      caption,
     })
 
   if (dbError) {

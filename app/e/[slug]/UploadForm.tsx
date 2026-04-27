@@ -234,41 +234,22 @@ export function UploadForm({
         />
       </div>
 
-      {/* 캡션 */}
+      {/* 이름 */}
       <div className="space-y-1.5">
         <label
-          htmlFor="caption"
+          htmlFor="guest_name"
           className="block text-xs font-medium uppercase tracking-widest text-neutral-400"
         >
-          캡션 <span className="text-neutral-300">(선택)</span>
+          이름 <span className="text-neutral-300">(선택)</span>
         </label>
         <input
-          id="caption"
-          name="caption"
+          id="guest_name"
+          name="guest_name"
           type="text"
-          placeholder="짧은 설명을 남겨보세요."
+          placeholder="이름을 입력하세요 (선택사항)"
           className="w-full border border-neutral-200 px-3 py-2.5 text-sm placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none transition-colors"
         />
       </div>
-
-      {/* 이름 (비회원) */}
-      {!isLoggedIn && (
-        <div className="space-y-1.5">
-          <label
-            htmlFor="guest_name"
-            className="block text-xs font-medium uppercase tracking-widest text-neutral-400"
-          >
-            이름 <span className="text-neutral-300">(선택)</span>
-          </label>
-          <input
-            id="guest_name"
-            name="guest_name"
-            type="text"
-            placeholder="표시될 이름"
-            className="w-full border border-neutral-200 px-3 py-2.5 text-sm placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none transition-colors"
-          />
-        </div>
-      )}
 
       {error && (
         <p role="alert" className="text-sm text-red-500">
