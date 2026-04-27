@@ -1,7 +1,8 @@
 'use server'
 
 import { randomUUID } from 'crypto'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export type UploadState = {
   error?: string
@@ -96,8 +97,8 @@ export async function claimUploads(uploadIds: string[]): Promise<void> {
     return
   }
 
-  const service = await createServiceClient()
-  const { data, error, count } = await service
+  const admin = createAdminClient()
+  const { data, error, count } = await admin
     .from('uploads')
     .update({ uploader_id: user.id, guest_name: null })
     .in('id', uploadIds)
