@@ -59,11 +59,28 @@ export async function login(_: AuthState, formData: FormData): Promise<AuthState
 
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) {
-    return { error: '이메일 또는 비밀번호가 올바르지 않습니다.' }
+  if (!error) redirect('/dashboard')
+
+  // 이메일 미인증 상태
+  if (error.code === 'email_not_confirmed') {
+    return { error: '이메일 인증이 완료되지 않았습니다. 받은 편지함을 확인해 주세요.' }
   }
 
-  redirect('/dashboard')
+  // invalid_credentials: Supabase는 이메일 미존재·비밀번호 오류를 동일 코드로 반환한다.
+  // profiles 테이블 조회로 이메일 존재 여부를 확인해 메시지를 분기한다.
+  if (error.code === 'invalid_credentials') {
+    const { count } = await supabase
+      .from('profiles')
+      .select('*', { count: 'exact', head: true })
+      .eq('email', email)
+
+    if (count === 0) {
+      return { error: '존재하지 않는 계정입니다.' }
+    }
+    return { error: '비밀번호가 올바르지 않습니다.' }
+  }
+
+  return { error: '로그인에 실패했습니다. 다시 시도해 주세요.' }
 }
 
 export async function logout() {
