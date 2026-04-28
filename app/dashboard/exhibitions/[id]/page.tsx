@@ -62,10 +62,10 @@ export default async function ExhibitionDetailPage({
     <div className="max-w-2xl">
       {/* 뒤로가기 */}
       <Link
-        href="/dashboard"
+        href="/my"
         className="text-xs text-secondary hover:text-fg transition-colors"
       >
-        ← 대시보드로
+        ← 내 페이지로
       </Link>
 
       {/* 헤더 */}

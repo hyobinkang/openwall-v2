@@ -80,27 +80,38 @@ export function MyPageTabs({
 
       {/* 주최한 전시 */}
       {tab === 'hosted' && (
-        hosted.length === 0 ? (
-          <p className="text-sm text-secondary py-16 text-center">아직 주최한 전시가 없습니다.</p>
-        ) : (
-          <div className="space-y-3">
-            {hosted.map((ex) => (
-              <Link
-                key={ex.id}
-                href={`/dashboard/exhibitions/${ex.id}`}
-                className="flex items-center justify-between border border-subtle px-4 py-3 hover:opacity-70 transition-opacity"
-              >
-                <div>
-                  <p className="text-sm font-medium text-fg">{ex.title}</p>
-                  <p className="text-xs text-secondary mt-0.5">{formatDate(ex.createdAt)}</p>
-                </div>
-                <span className="text-xs text-secondary ml-4 shrink-0">
-                  {STATUS_LABEL[ex.status] ?? ex.status}
-                </span>
-              </Link>
-            ))}
+        <>
+          <div className="flex items-center justify-between mb-5">
+            <p className="text-sm text-secondary">{hosted.length}개의 전시</p>
+            <Link
+              href="/dashboard/exhibitions/new"
+              className="text-xs border border-subtle text-fg px-3 py-1.5 hover:border-fg transition-colors"
+            >
+              + 새 전시 만들기
+            </Link>
           </div>
-        )
+          {hosted.length === 0 ? (
+            <p className="text-sm text-secondary py-16 text-center">아직 주최한 전시가 없습니다.</p>
+          ) : (
+            <div className="space-y-3">
+              {hosted.map((ex) => (
+                <Link
+                  key={ex.id}
+                  href={`/dashboard/exhibitions/${ex.id}`}
+                  className="flex items-center justify-between border border-subtle px-4 py-3 hover:opacity-70 transition-opacity"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-fg">{ex.title}</p>
+                    <p className="text-xs text-secondary mt-0.5">{formatDate(ex.createdAt)}</p>
+                  </div>
+                  <span className="text-xs text-secondary ml-4 shrink-0">
+                    {STATUS_LABEL[ex.status] ?? ex.status}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* 참여한 전시 */}
