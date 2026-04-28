@@ -247,7 +247,7 @@ export function UploadForm({
       {/* 이름 */}
       <div className="space-y-2.5">
         <span className="block text-xs font-medium uppercase tracking-widest text-neutral-400">
-          이름 <span className="text-neutral-300">(선택)</span>
+          {isLoggedIn ? '이름' : '닉네임'} <span className="text-neutral-300">(선택)</span>
         </span>
 
         {isLoggedIn ? (

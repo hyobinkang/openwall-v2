@@ -14,14 +14,6 @@ function toKST(iso: string) {
   })
 }
 
-function uploaderLabel(upload: {
-  uploader_id: string | null
-  guest_name: string | null
-}): string {
-  if (upload.guest_name) return upload.guest_name
-  if (upload.uploader_id) return '회원'
-  return '익명'
-}
 
 export default async function ExhibitionGalleryPage({
   params,
@@ -41,18 +33,18 @@ export default async function ExhibitionGalleryPage({
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  let myProfileName = '회원'
+  let myProfileName: string | null = null
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('name')
       .eq('id', user.id)
       .single()
-    myProfileName = profile?.name ?? user.email?.split('@')[0] ?? '회원'
+    myProfileName = profile?.name ?? user.email?.split('@')[0] ?? null
   }
 
   function myDisplayName(u: { guest_name: string | null }): string {
-    return u.guest_name || myProfileName
+    return u.guest_name || myProfileName || '익명'
   }
 
   const { data: uploads } = await supabase
@@ -67,13 +59,16 @@ export default async function ExhibitionGalleryPage({
     const { data } = u.storage_path
       ? supabase.storage.from('uploads').getPublicUrl(u.storage_path)
       : { data: { publicUrl: null } }
+    const label = u.guest_name
+      || (u.uploader_id === user?.id ? myProfileName : null)
+      || '익명'
     return {
       id: u.id,
       type: u.type as 'photo' | 'text',
       publicUrl: data?.publicUrl ?? null,
       text_content: u.text_content,
       caption: u.caption,
-      uploaderLabel: uploaderLabel(u),
+      uploaderLabel: label,
       createdAt: toKST(u.created_at),
     }
   }

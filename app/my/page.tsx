@@ -32,10 +32,10 @@ export default async function MyPage() {
       .single(),
   ])
 
-  const myProfileName = profile?.name ?? user.email?.split('@')[0] ?? '회원'
+  const myProfileName = profile?.name ?? user.email?.split('@')[0] ?? null
 
   function displayName(upload: { guest_name: string | null }): string {
-    return upload.guest_name || myProfileName
+    return upload.guest_name || myProfileName || '익명'
   }
 
   const raw = uploads ?? []
