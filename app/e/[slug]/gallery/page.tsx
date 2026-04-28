@@ -87,17 +87,17 @@ export default async function ExhibitionGalleryPage({
   }
 
   return (
-    <div className="min-h-screen bg-black">
-      <header className="border-b border-white px-6 py-4 flex items-center justify-between">
-        <Link href={`/e/${slug}`} className="text-sm font-bold tracking-tight text-white">
+    <div className="min-h-screen bg-bg">
+      <header className="border-b border-subtle px-6 py-4 flex items-center justify-between">
+        <Link href={`/e/${slug}`} className="text-sm font-bold tracking-tight text-fg">
           Openwall
         </Link>
         {user ? (
-          <Link href="/my" className="text-xs text-gray-400 hover:text-white transition-colors">
+          <Link href="/my" className="text-xs text-secondary hover:text-fg transition-colors">
             내 페이지
           </Link>
         ) : (
-          <Link href="/login" className="text-xs text-gray-400 hover:text-white transition-colors">
+          <Link href="/login" className="text-xs text-secondary hover:text-fg transition-colors">
             로그인
           </Link>
         )}
@@ -106,7 +106,7 @@ export default async function ExhibitionGalleryPage({
       <main className="max-w-3xl mx-auto px-5 py-10">
         <div className="mb-6">
           <h1 className="text-xl font-bold tracking-tight">{exhibition.title}</h1>
-          <p className="mt-1 text-sm text-gray-400">업로드 {allItems.length}개</p>
+          <p className="mt-1 text-sm text-secondary">업로드 {allItems.length}개</p>
         </div>
 
         {/* 내가 남긴 기록 */}
@@ -120,13 +120,13 @@ export default async function ExhibitionGalleryPage({
                 // 텍스트 전용 카드
                 if (u.type === 'text') {
                   return (
-                    <div key={u.id} className="border border-white px-4 py-3">
+                    <div key={u.id} className="border border-subtle bg-surface px-4 py-3">
                       {u.text_content && (
-                        <p className="text-sm text-gray-200 leading-relaxed line-clamp-3 break-words">
+                        <p className="text-sm text-fg leading-relaxed line-clamp-3 break-words">
                           {u.text_content}
                         </p>
                       )}
-                      <p className="mt-1.5 text-xs text-gray-400">
+                      <p className="mt-1.5 text-xs text-secondary">
                         {myDisplayName(u)} · {toKST(u.created_at)}
                       </p>
                     </div>
@@ -135,9 +135,9 @@ export default async function ExhibitionGalleryPage({
 
                 // 사진 카드
                 return (
-                  <div key={u.id} className="border border-white flex gap-4 p-3">
+                  <div key={u.id} className="border border-subtle bg-surface flex gap-4 p-3">
                     {url && (
-                      <div className="relative w-16 h-16 flex-shrink-0 bg-black">
+                      <div className="relative w-16 h-16 flex-shrink-0 bg-bg">
                         <Image
                           src={url}
                           alt="업로드 사진"
@@ -149,11 +149,11 @@ export default async function ExhibitionGalleryPage({
                     )}
                     <div className="flex-1 min-w-0 flex flex-col justify-between">
                       {u.text_content && (
-                        <p className="text-sm text-gray-200 leading-relaxed line-clamp-2 break-words">
+                        <p className="text-sm text-fg leading-relaxed line-clamp-2 break-words">
                           {u.text_content}
                         </p>
                       )}
-                      <p className="text-xs text-gray-400 mt-1">
+                      <p className="text-xs text-secondary mt-1">
                         {myDisplayName(u)} · {toKST(u.created_at)}
                       </p>
                     </div>
@@ -166,8 +166,8 @@ export default async function ExhibitionGalleryPage({
 
         {/* 전체 업로드 */}
         {allItems.length === 0 ? (
-          <div className="border border-dashed border-white py-24 text-center">
-            <p className="text-sm text-gray-400">아직 업로드된 항목이 없습니다.</p>
+          <div className="border border-dashed border-subtle py-24 text-center">
+            <p className="text-sm text-secondary">아직 업로드된 항목이 없습니다.</p>
           </div>
         ) : (
           <UploadsGrid items={allItems} />
@@ -178,7 +178,7 @@ export default async function ExhibitionGalleryPage({
           <div className="mt-10 text-center">
             <Link
               href={`/e/${slug}`}
-              className="inline-block border border-white text-white px-6 py-2.5 text-sm font-medium hover:border-white transition-colors"
+              className="inline-block border border-subtle text-fg px-6 py-2.5 text-sm font-medium hover:border-fg transition-colors"
             >
               나도 업로드하기
             </Link>

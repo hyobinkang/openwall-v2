@@ -43,7 +43,7 @@ export function QRCodeDisplay({ url, slug }: Props) {
 
       {/* URL */}
       <div className="mt-4 w-full max-w-xs">
-        <p className="text-center text-xs font-mono text-gray-400 break-all bg-black border border-white px-3 py-2">
+        <p className="text-center text-xs font-mono text-secondary break-all bg-surface border border-subtle px-3 py-2">
           {url}
         </p>
       </div>
@@ -52,13 +52,13 @@ export function QRCodeDisplay({ url, slug }: Props) {
       <div className="mt-4 flex gap-2">
         <button
           onClick={copyUrl}
-          className="text-sm border border-white text-white px-4 py-2 hover:border-white transition-colors"
+          className="text-sm border border-subtle text-fg px-4 py-2 hover:border-fg transition-colors"
         >
           {copied ? '✓ 복사됨' : 'URL 복사'}
         </button>
         <button
           onClick={downloadSvg}
-          className="text-sm bg-white text-black px-4 py-2 hover:bg-gray-100 transition-colors"
+          className="text-sm bg-fg text-bg px-4 py-2 hover:bg-gray6 transition-colors"
         >
           QR 다운로드
         </button>

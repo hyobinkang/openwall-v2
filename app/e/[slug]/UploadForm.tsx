@@ -23,7 +23,7 @@ function GoogleSignInButton() {
     <button
       onClick={handleClick}
       disabled={loading}
-      className="flex items-center justify-center gap-3 w-full border border-white px-4 py-3 text-sm font-medium text-white hover:border-white transition-colors disabled:opacity-50"
+      className="flex items-center justify-center gap-3 w-full border border-subtle px-4 py-3 text-sm font-medium text-fg hover:border-fg transition-colors disabled:opacity-50"
     >
       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
@@ -76,11 +76,11 @@ function SuccessView({
   return (
     <div className="space-y-6">
       <div className="text-center py-6">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white text-black text-xl mb-4">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-fg text-bg text-xl mb-4">
           ✓
         </div>
         <h2 className="text-lg font-bold">업로드 완료!</h2>
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-sm text-secondary">
           {isLoggedIn
             ? '내 아카이브에도 자동으로 저장되었습니다.'
             : '이 업로드는 비회원으로 기록되었습니다.'}
@@ -90,24 +90,24 @@ function SuccessView({
       {isLoggedIn ? (
         <a
           href="/my"
-          className="flex items-center justify-center w-full bg-white py-3 text-sm font-medium tracking-wide text-black hover:bg-gray-100 transition-colors"
+          className="flex items-center justify-center w-full bg-fg py-3 text-sm font-medium tracking-wide text-bg hover:bg-gray6 transition-colors"
         >
           내 아카이브에서 확인하기
         </a>
       ) : (
-        <div className="border border-white px-5 py-6 space-y-4">
+        <div className="border border-subtle bg-surface px-5 py-6 space-y-4">
           <div>
-            <p className="text-sm font-medium text-white">
+            <p className="text-sm font-medium text-fg">
               내 아카이브에 저장하려면 로그인하세요
             </p>
-            <p className="mt-1 text-xs text-gray-400 leading-relaxed">
+            <p className="mt-1 text-xs text-secondary leading-relaxed">
               가입하면 방문한 전시의 기록이 쌓입니다.
             </p>
           </div>
           <GoogleSignInButton />
           <a
             href={`/signup?redirect=/my${uploadId ? `&uploadId=${uploadId}` : ''}`}
-            className="flex items-center justify-center w-full border border-white px-4 py-3 text-sm font-medium text-white hover:border-white transition-colors"
+            className="flex items-center justify-center w-full border border-subtle px-4 py-3 text-sm font-medium text-fg hover:border-fg transition-colors"
           >
             이메일로 회원가입
           </a>
@@ -116,14 +116,14 @@ function SuccessView({
 
       <a
         href={`/e/${slug}/gallery`}
-        className="flex items-center justify-center w-full border border-white py-3 text-sm font-medium text-white hover:border-white transition-colors"
+        className="flex items-center justify-center w-full border border-subtle py-3 text-sm font-medium text-fg hover:border-fg transition-colors"
       >
         다른 사람들 리뷰도 보기
       </a>
 
       <button
         onClick={onEditAgain}
-        className="w-full border border-white py-3 text-sm text-gray-400 hover:border-white hover:text-white transition-colors"
+        className="w-full border border-subtle py-3 text-sm text-secondary hover:border-fg hover:text-fg transition-colors"
       >
         다시 업로드하기
       </button>
@@ -273,8 +273,8 @@ export function UploadForm({
 
       {/* 사진 업로드 */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-medium uppercase tracking-widest text-gray-400">
-          사진 <span className="text-gray-600">(선택)</span>
+        <label className="block text-xs font-medium uppercase tracking-widest text-secondary">
+          사진 <span className="text-muted">(선택)</span>
         </label>
         {preview ? (
           <div className="relative">
@@ -282,12 +282,12 @@ export function UploadForm({
             <img
               src={preview}
               alt="미리보기"
-              className="w-full max-h-72 object-cover border border-white"
+              className="w-full max-h-72 object-cover border border-subtle"
             />
             <button
               type="button"
               onClick={removePhoto}
-              className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 hover:bg-black transition-colors"
+              className="absolute top-2 right-2 bg-bg/60 text-fg text-xs px-2 py-1 hover:bg-bg transition-colors"
             >
               제거
             </button>
@@ -302,16 +302,16 @@ export function UploadForm({
               className="sr-only"
               onChange={handleFileChange}
             />
-            <div className="border-2 border-dashed border-white group-hover:border-gray-400 transition-colors flex flex-col items-center justify-center py-10 gap-2">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-600 group-hover:text-gray-400 transition-colors" aria-hidden>
+            <div className="border-2 border-dashed border-subtle group-hover:border-fg transition-colors flex flex-col items-center justify-center py-10 gap-2">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted group-hover:text-secondary transition-colors" aria-hidden>
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
-              <span className="text-sm text-gray-400 group-hover:text-gray-200 transition-colors">
+              <span className="text-sm text-secondary group-hover:text-fg transition-colors">
                 사진 추가
               </span>
-              <span className="text-xs text-gray-600">최대 {MAX_MB}MB</span>
+              <span className="text-xs text-muted">최대 {MAX_MB}MB</span>
             </div>
           </label>
         )}
@@ -321,9 +321,9 @@ export function UploadForm({
       <div className="space-y-1.5">
         <label
           htmlFor="text_content"
-          className="block text-xs font-medium uppercase tracking-widest text-gray-400"
+          className="block text-xs font-medium uppercase tracking-widest text-secondary"
         >
-          텍스트 <span className="text-gray-600">(선택)</span>
+          텍스트 <span className="text-muted">(선택)</span>
         </label>
         <textarea
           key={`text-${editFormKey}`}
@@ -333,14 +333,14 @@ export function UploadForm({
           defaultValue={isEditing ? (savedData?.textContent ?? '') : ''}
           placeholder="전시에 남길 글을 자유롭게 써주세요."
           onChange={(e) => setHasText(e.target.value.trim().length > 0)}
-          className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-white focus:outline-none transition-colors resize-none"
+          className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg placeholder:text-muted focus:border-fg focus:outline-none transition-colors resize-none"
         />
       </div>
 
       {/* 이름 */}
       <div className="space-y-2.5">
-        <span className="block text-xs font-medium uppercase tracking-widest text-gray-400">
-          {isLoggedIn ? '이름' : '닉네임'} <span className="text-gray-600">(선택)</span>
+        <span className="block text-xs font-medium uppercase tracking-widest text-secondary">
+          {isLoggedIn ? '이름' : '닉네임'} <span className="text-muted">(선택)</span>
         </span>
 
         {isLoggedIn ? (
@@ -362,7 +362,7 @@ export function UploadForm({
                     onChange={() => setNameMode(value)}
                     className="accent-white"
                   />
-                  <span className="text-sm text-gray-200">{label}</span>
+                  <span className="text-sm text-fg">{label}</span>
                 </label>
               ))}
             </div>
@@ -370,7 +370,7 @@ export function UploadForm({
             {nameMode === 'member' && (
               <>
                 <input type="hidden" name="guest_name" value={userName ?? ''} />
-                <p className="text-sm text-gray-400 border border-white bg-black px-3 py-2.5">
+                <p className="text-sm text-secondary border border-subtle bg-surface px-3 py-2.5">
                   {userName ?? '(이름 없음)'}
                 </p>
               </>
@@ -383,7 +383,7 @@ export function UploadForm({
                 type="text"
                 defaultValue={isEditing ? (savedData?.guestName ?? '') : ''}
                 placeholder="닉네임을 입력하세요"
-                className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-white focus:outline-none transition-colors"
+                className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg placeholder:text-muted focus:border-fg focus:outline-none transition-colors"
               />
             )}
 
@@ -399,7 +399,7 @@ export function UploadForm({
             type="text"
             defaultValue={isEditing ? (savedData?.guestName ?? '') : ''}
             placeholder="닉네임을 입력하세요 (미입력 시 익명으로 표시)"
-            className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-white focus:outline-none transition-colors"
+            className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg placeholder:text-muted focus:border-fg focus:outline-none transition-colors"
           />
         )}
       </div>
@@ -413,7 +413,7 @@ export function UploadForm({
       <button
         type="submit"
         disabled={pending}
-        className="w-full bg-white py-3 text-sm font-medium tracking-wide text-black hover:bg-gray-100 transition-colors disabled:opacity-40"
+        className="w-full bg-fg py-3 text-sm font-medium tracking-wide text-bg hover:bg-gray6 transition-colors disabled:opacity-40"
       >
         {pending ? (isEditing ? '수정 중…' : '업로드 중…') : (isEditing ? '수정하기' : '업로드하기')}
       </button>

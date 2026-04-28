@@ -88,12 +88,12 @@ export default async function MyPage() {
   const participated: ParticipatedGroup[] = Array.from(groupMap.values())
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-bg text-fg">
       <ClaimUploads />
 
-      <header className="border-b border-white px-5 py-4 flex items-center justify-between">
-        <Link href="/" className="text-base font-bold tracking-tight text-white">Openwall</Link>
-        <span className="text-sm text-gray-400">내 페이지</span>
+      <header className="border-b border-subtle px-5 py-4 flex items-center justify-between">
+        <Link href="/" className="text-base font-bold tracking-tight text-fg">Openwall</Link>
+        <span className="text-sm text-secondary">내 페이지</span>
       </header>
 
       <main className="max-w-2xl mx-auto px-5 py-10">

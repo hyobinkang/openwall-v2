@@ -58,18 +58,18 @@ export default async function ExhibitionVisitorPage({
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-bg">
       {/* 헤더 */}
-      <header className="border-b border-white px-6 py-4 flex items-center justify-between">
-        <Link href={user ? '/my' : '/'} className="text-sm font-bold tracking-tight text-white">
+      <header className="border-b border-subtle px-6 py-4 flex items-center justify-between">
+        <Link href={user ? '/my' : '/'} className="text-sm font-bold tracking-tight text-fg">
           Openwall
         </Link>
         {user ? (
-          <Link href="/my" className="text-xs text-gray-400 hover:text-white transition-colors">
+          <Link href="/my" className="text-xs text-secondary hover:text-fg transition-colors">
             내 페이지
           </Link>
         ) : (
-          <Link href="/login" className="text-xs text-gray-400 hover:text-white transition-colors">
+          <Link href="/login" className="text-xs text-secondary hover:text-fg transition-colors">
             로그인
           </Link>
         )}
@@ -80,12 +80,12 @@ export default async function ExhibitionVisitorPage({
         <div className="mb-10">
           <h1 className="text-2xl font-bold tracking-tight">{exhibition.title}</h1>
           {exhibition.description && (
-            <p className="mt-2 text-sm text-gray-400 leading-relaxed">
+            <p className="mt-2 text-sm text-secondary leading-relaxed">
               {exhibition.description}
             </p>
           )}
           {(exhibition.starts_at || exhibition.ends_at) && (
-            <p className="mt-2 text-xs text-gray-400">
+            <p className="mt-2 text-xs text-secondary">
               {formatDate(exhibition.starts_at)}
               {exhibition.ends_at && ` — ${formatDate(exhibition.ends_at)}`}
             </p>
@@ -94,15 +94,15 @@ export default async function ExhibitionVisitorPage({
 
         {/* 상태별 분기 */}
         {exhibition.status === 'closed' ? (
-          <div className="border border-white px-6 py-8 text-center">
-            <p className="text-sm font-medium text-white">전시가 종료되었습니다.</p>
-            <p className="mt-1 text-xs text-gray-400">
+          <div className="border border-subtle px-6 py-8 text-center">
+            <p className="text-sm font-medium text-fg">전시가 종료되었습니다.</p>
+            <p className="mt-1 text-xs text-secondary">
               업로드가 마감됐지만 전시 기록은 보존됩니다.
             </p>
           </div>
         ) : exhibition.status === 'draft' ? (
-          <div className="border border-dashed border-white px-6 py-8 text-center">
-            <p className="text-sm text-gray-400">준비 중인 전시입니다.</p>
+          <div className="border border-dashed border-subtle px-6 py-8 text-center">
+            <p className="text-sm text-secondary">준비 중인 전시입니다.</p>
           </div>
         ) : (
           <UploadForm exhibitionId={exhibition.id} isLoggedIn={!!user} userName={userName} slug={slug} />

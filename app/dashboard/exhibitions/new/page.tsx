@@ -10,17 +10,17 @@ export default function NewExhibitionPage() {
       <div className="mb-8">
         <Link
           href="/dashboard"
-          className="text-xs text-gray-400 hover:text-white transition-colors"
+          className="text-xs text-secondary hover:text-fg transition-colors"
         >
           ← 대시보드로
         </Link>
         <h1 className="mt-3 text-2xl font-bold tracking-tight">새 전시 만들기</h1>
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-sm text-secondary">
           전시를 생성하면 QR 코드가 발급됩니다. 관람객은 QR을 스캔해 사진·텍스트를 업로드할 수 있습니다.
         </p>
       </div>
 
-      <div className="bg-black border border-white p-6">
+      <div className="bg-surface border border-subtle p-6">
         <CreateExhibitionForm />
       </div>
     </div>

@@ -15,7 +15,7 @@ export function LoginForm() {
       <div className="space-y-1">
         <label
           htmlFor="email"
-          className="block text-xs font-medium uppercase tracking-widest text-gray-400"
+          className="block text-xs font-medium uppercase tracking-widest text-secondary"
         >
           이메일
         </label>
@@ -26,14 +26,14 @@ export function LoginForm() {
           required
           autoComplete="email"
           placeholder="hello@example.com"
-          className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-white focus:outline-none transition-colors"
+          className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg placeholder:text-muted focus:border-fg focus:outline-none transition-colors"
         />
       </div>
 
       <div className="space-y-1">
         <label
           htmlFor="password"
-          className="block text-xs font-medium uppercase tracking-widest text-gray-400"
+          className="block text-xs font-medium uppercase tracking-widest text-secondary"
         >
           비밀번호
         </label>
@@ -44,7 +44,7 @@ export function LoginForm() {
           required
           autoComplete="current-password"
           placeholder="••••••••"
-          className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-white focus:outline-none transition-colors"
+          className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg placeholder:text-muted focus:border-fg focus:outline-none transition-colors"
         />
       </div>
 
@@ -57,16 +57,16 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full bg-white py-3 text-sm font-medium tracking-wide text-black transition-colors hover:bg-gray-100 disabled:opacity-40"
+        className="w-full bg-fg py-3 text-sm font-medium tracking-wide text-bg transition-colors hover:bg-gray6 disabled:opacity-40"
       >
         {pending ? '로그인 중…' : '로그인'}
       </button>
 
-      <p className="text-center text-sm text-gray-400">
+      <p className="text-center text-sm text-secondary">
         계정이 없으신가요?{' '}
         <Link
           href="/signup"
-          className="text-white underline underline-offset-2 hover:text-gray-200"
+          className="text-fg underline underline-offset-2 hover:text-fg"
         >
           가입하기
         </Link>

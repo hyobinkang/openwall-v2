@@ -12,9 +12,9 @@ const STATUS_LABEL: Record<Exhibition['status'], string> = {
 }
 
 const STATUS_CLASS: Record<Exhibition['status'], string> = {
-  active: 'text-white border border-white',
-  draft: 'text-gray-400 border border-gray-600',
-  closed: 'text-gray-500 border border-gray-600',
+  active: 'text-fg border border-subtle',
+  draft: 'text-secondary border border-subtle',
+  closed: 'text-secondary border border-subtle',
 }
 
 function formatDate(iso: string | null) {
@@ -63,7 +63,7 @@ export default async function ExhibitionDetailPage({
       {/* 뒤로가기 */}
       <Link
         href="/dashboard"
-        className="text-xs text-gray-400 hover:text-white transition-colors"
+        className="text-xs text-secondary hover:text-fg transition-colors"
       >
         ← 대시보드로
       </Link>
@@ -73,7 +73,7 @@ export default async function ExhibitionDetailPage({
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight truncate">{ex.title}</h1>
           {ex.description && (
-            <p className="mt-1.5 text-sm text-gray-400">{ex.description}</p>
+            <p className="mt-1.5 text-sm text-secondary">{ex.description}</p>
           )}
           <div className="mt-2 flex items-center gap-3 flex-wrap">
             <span
@@ -82,11 +82,11 @@ export default async function ExhibitionDetailPage({
               {STATUS_LABEL[ex.status]}
             </span>
             {(ex.starts_at || ex.ends_at) && (
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-secondary">
                 {formatDate(ex.starts_at)} {ex.ends_at && `— ${formatDate(ex.ends_at)}`}
               </span>
             )}
-            <span className="text-xs text-gray-400">
+            <span className="text-xs text-secondary">
               업로드 {uploadCount ?? 0}개
             </span>
           </div>
@@ -94,45 +94,45 @@ export default async function ExhibitionDetailPage({
         <Link
           href={`/e/${ex.slug}`}
           target="_blank"
-          className="shrink-0 text-xs border border-white text-white px-3 py-1.5 hover:border-white transition-colors whitespace-nowrap"
+          className="shrink-0 text-xs border border-subtle text-fg px-3 py-1.5 hover:border-fg transition-colors whitespace-nowrap"
         >
           전시 보기 ↗
         </Link>
       </div>
 
-      <hr className="my-8 border-gray-600" />
+      <hr className="my-8 border-subtle" />
 
       {/* QR 코드 섹션 */}
       <section>
-        <h2 className="text-xs font-medium uppercase tracking-widest text-gray-500 mb-6">
+        <h2 className="text-xs font-medium uppercase tracking-widest text-secondary mb-6">
           QR 코드
         </h2>
         <QRCodeDisplay url={exhibitionUrl} slug={ex.slug} />
-        <p className="mt-6 text-xs text-center text-gray-400">
+        <p className="mt-6 text-xs text-center text-secondary">
           관람객이 이 QR을 스캔하면 사진·텍스트를 업로드할 수 있습니다.
         </p>
       </section>
 
-      <hr className="my-8 border-gray-600" />
+      <hr className="my-8 border-subtle" />
 
       {/* 업로드 목록 바로가기 */}
       <section>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xs font-medium uppercase tracking-widest text-gray-500">
+          <h2 className="text-xs font-medium uppercase tracking-widest text-secondary">
             수집된 업로드
           </h2>
-          <span className="text-sm font-medium text-white">
+          <span className="text-sm font-medium text-fg">
             {uploadCount ?? 0}개
           </span>
         </div>
         {uploadCount === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8 border border-dashed border-white">
+          <p className="text-sm text-secondary text-center py-8 border border-dashed border-subtle">
             아직 업로드된 항목이 없습니다. QR을 공유해 보세요.
           </p>
         ) : (
           <Link
             href={`/dashboard/exhibitions/${id}/uploads`}
-            className="block text-center text-sm font-medium text-white border border-white py-3 hover:border-white transition-colors"
+            className="block text-center text-sm font-medium text-fg border border-subtle py-3 hover:border-fg transition-colors"
           >
             업로드 전체 보기 →
           </Link>
