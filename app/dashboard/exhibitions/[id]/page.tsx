@@ -12,9 +12,9 @@ const STATUS_LABEL: Record<Exhibition['status'], string> = {
 }
 
 const STATUS_CLASS: Record<Exhibition['status'], string> = {
-  active: 'text-emerald-400 bg-emerald-900/30',
-  draft: 'text-gray-400 bg-gray-800',
-  closed: 'text-gray-500 bg-gray-800',
+  active: 'text-white border border-white',
+  draft: 'text-gray-400 border border-gray-600',
+  closed: 'text-gray-500 border border-gray-600',
 }
 
 function formatDate(iso: string | null) {
@@ -94,13 +94,13 @@ export default async function ExhibitionDetailPage({
         <Link
           href={`/e/${ex.slug}`}
           target="_blank"
-          className="shrink-0 text-xs border border-gray-700 text-white px-3 py-1.5 hover:border-white transition-colors whitespace-nowrap"
+          className="shrink-0 text-xs border border-white text-white px-3 py-1.5 hover:border-white transition-colors whitespace-nowrap"
         >
           전시 보기 ↗
         </Link>
       </div>
 
-      <hr className="my-8 border-gray-800" />
+      <hr className="my-8 border-gray-600" />
 
       {/* QR 코드 섹션 */}
       <section>
@@ -113,7 +113,7 @@ export default async function ExhibitionDetailPage({
         </p>
       </section>
 
-      <hr className="my-8 border-gray-800" />
+      <hr className="my-8 border-gray-600" />
 
       {/* 업로드 목록 바로가기 */}
       <section>
@@ -126,13 +126,13 @@ export default async function ExhibitionDetailPage({
           </span>
         </div>
         {uploadCount === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-8 border border-dashed border-gray-800">
+          <p className="text-sm text-gray-400 text-center py-8 border border-dashed border-white">
             아직 업로드된 항목이 없습니다. QR을 공유해 보세요.
           </p>
         ) : (
           <Link
             href={`/dashboard/exhibitions/${id}/uploads`}
-            className="block text-center text-sm font-medium text-white border border-gray-800 py-3 hover:border-white transition-colors"
+            className="block text-center text-sm font-medium text-white border border-white py-3 hover:border-white transition-colors"
           >
             업로드 전체 보기 →
           </Link>

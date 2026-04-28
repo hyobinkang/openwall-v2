@@ -23,7 +23,7 @@ function GoogleSignInButton() {
     <button
       onClick={handleClick}
       disabled={loading}
-      className="flex items-center justify-center gap-3 w-full border border-gray-700 px-4 py-3 text-sm font-medium text-white hover:border-white transition-colors disabled:opacity-50"
+      className="flex items-center justify-center gap-3 w-full border border-white px-4 py-3 text-sm font-medium text-white hover:border-white transition-colors disabled:opacity-50"
     >
       <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
@@ -95,7 +95,7 @@ function SuccessView({
           내 아카이브에서 확인하기
         </a>
       ) : (
-        <div className="border border-gray-800 px-5 py-6 space-y-4">
+        <div className="border border-white px-5 py-6 space-y-4">
           <div>
             <p className="text-sm font-medium text-white">
               내 아카이브에 저장하려면 로그인하세요
@@ -107,7 +107,7 @@ function SuccessView({
           <GoogleSignInButton />
           <a
             href={`/signup?redirect=/my${uploadId ? `&uploadId=${uploadId}` : ''}`}
-            className="flex items-center justify-center w-full border border-gray-700 px-4 py-3 text-sm font-medium text-white hover:border-white transition-colors"
+            className="flex items-center justify-center w-full border border-white px-4 py-3 text-sm font-medium text-white hover:border-white transition-colors"
           >
             이메일로 회원가입
           </a>
@@ -116,14 +116,14 @@ function SuccessView({
 
       <a
         href={`/e/${slug}/gallery`}
-        className="flex items-center justify-center w-full border border-gray-700 py-3 text-sm font-medium text-white hover:border-white transition-colors"
+        className="flex items-center justify-center w-full border border-white py-3 text-sm font-medium text-white hover:border-white transition-colors"
       >
         다른 사람들 리뷰도 보기
       </a>
 
       <button
         onClick={onEditAgain}
-        className="w-full border border-gray-800 py-3 text-sm text-gray-400 hover:border-gray-600 hover:text-white transition-colors"
+        className="w-full border border-white py-3 text-sm text-gray-400 hover:border-white hover:text-white transition-colors"
       >
         다시 업로드하기
       </button>
@@ -282,7 +282,7 @@ export function UploadForm({
             <img
               src={preview}
               alt="미리보기"
-              className="w-full max-h-72 object-cover border border-gray-700"
+              className="w-full max-h-72 object-cover border border-white"
             />
             <button
               type="button"
@@ -302,7 +302,7 @@ export function UploadForm({
               className="sr-only"
               onChange={handleFileChange}
             />
-            <div className="border-2 border-dashed border-gray-700 group-hover:border-gray-400 transition-colors flex flex-col items-center justify-center py-10 gap-2">
+            <div className="border-2 border-dashed border-white group-hover:border-gray-400 transition-colors flex flex-col items-center justify-center py-10 gap-2">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-gray-600 group-hover:text-gray-400 transition-colors" aria-hidden>
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="17 8 12 3 7 8" />
@@ -333,7 +333,7 @@ export function UploadForm({
           defaultValue={isEditing ? (savedData?.textContent ?? '') : ''}
           placeholder="전시에 남길 글을 자유롭게 써주세요."
           onChange={(e) => setHasText(e.target.value.trim().length > 0)}
-          className="w-full border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-white focus:outline-none transition-colors resize-none"
+          className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-white focus:outline-none transition-colors resize-none"
         />
       </div>
 
@@ -370,7 +370,7 @@ export function UploadForm({
             {nameMode === 'member' && (
               <>
                 <input type="hidden" name="guest_name" value={userName ?? ''} />
-                <p className="text-sm text-gray-400 border border-gray-800 bg-gray-900 px-3 py-2.5">
+                <p className="text-sm text-gray-400 border border-white bg-black px-3 py-2.5">
                   {userName ?? '(이름 없음)'}
                 </p>
               </>
@@ -383,7 +383,7 @@ export function UploadForm({
                 type="text"
                 defaultValue={isEditing ? (savedData?.guestName ?? '') : ''}
                 placeholder="닉네임을 입력하세요"
-                className="w-full border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-white focus:outline-none transition-colors"
+                className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-white focus:outline-none transition-colors"
               />
             )}
 
@@ -399,7 +399,7 @@ export function UploadForm({
             type="text"
             defaultValue={isEditing ? (savedData?.guestName ?? '') : ''}
             placeholder="닉네임을 입력하세요 (미입력 시 익명으로 표시)"
-            className="w-full border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-white focus:outline-none transition-colors"
+            className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-white focus:outline-none transition-colors"
           />
         )}
       </div>

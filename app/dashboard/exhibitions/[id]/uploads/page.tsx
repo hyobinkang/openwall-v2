@@ -90,7 +90,7 @@ export default async function ExhibitionUploadsPage({
       </div>
 
       {items.length === 0 ? (
-        <div className="border border-dashed border-gray-800 py-24 text-center">
+        <div className="border border-dashed border-white py-24 text-center">
           <p className="text-sm text-gray-400">아직 업로드된 항목이 없습니다.</p>
           <p className="mt-1 text-xs text-gray-600">
             QR 코드를 공유하면 관람객이 사진과 텍스트를 올릴 수 있습니다.

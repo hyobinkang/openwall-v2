@@ -29,7 +29,7 @@ function Modal({ item, onClose }: { item: UploadItem; onClose: () => void }) {
       onClick={onClose}
     >
       <div
-        className="bg-gray-900 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        className="bg-black w-full max-w-lg max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 닫기 버튼 */}
@@ -66,13 +66,13 @@ function Modal({ item, onClose }: { item: UploadItem; onClose: () => void }) {
 
           {/* 캡션 */}
           {item.caption && (
-            <p className="text-xs text-gray-400 italic border-t border-gray-800 pt-3">
+            <p className="text-xs text-gray-400 italic border-t border-white pt-3">
               {item.caption}
             </p>
           )}
 
           {/* 메타 */}
-          <p className="text-xs text-gray-500 border-t border-gray-800 pt-3">
+          <p className="text-xs text-gray-500 border-t border-white pt-3">
             {item.uploaderLabel} · {item.createdAt}
           </p>
         </div>
@@ -93,11 +93,11 @@ function UploadCard({
     <button
       type="button"
       onClick={onClick}
-      className="text-left bg-black border border-gray-800 hover:border-gray-600 transition-colors w-full overflow-hidden"
+      className="text-left bg-black border border-white hover:border-white transition-colors w-full overflow-hidden"
     >
       {/* 이미지 섹션 */}
       {item.type === 'photo' && item.publicUrl && (
-        <div className="relative w-full aspect-[4/3] bg-gray-900">
+        <div className="relative w-full aspect-[4/3] bg-black">
           <Image
             src={item.publicUrl}
             alt={item.caption ?? '업로드 사진'}
@@ -110,7 +110,7 @@ function UploadCard({
 
       {/* 텍스트 카드 헤더 (텍스트 전용) */}
       {item.type === 'text' && (
-        <div className="bg-gray-900 px-4 py-5 min-h-[100px] flex items-start">
+        <div className="bg-black px-4 py-5 min-h-[100px] flex items-start">
           <p className="text-sm text-gray-200 leading-relaxed line-clamp-3">
             {item.text_content}
           </p>

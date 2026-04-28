@@ -88,7 +88,7 @@ export default async function ExhibitionGalleryPage({
 
   return (
     <div className="min-h-screen bg-black">
-      <header className="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-white px-6 py-4 flex items-center justify-between">
         <Link href={`/e/${slug}`} className="text-sm font-bold tracking-tight text-white">
           Openwall
         </Link>
@@ -120,7 +120,7 @@ export default async function ExhibitionGalleryPage({
                 // 텍스트 전용 카드
                 if (u.type === 'text') {
                   return (
-                    <div key={u.id} className="border border-gray-800 px-4 py-3">
+                    <div key={u.id} className="border border-white px-4 py-3">
                       {u.text_content && (
                         <p className="text-sm text-gray-200 leading-relaxed line-clamp-3 break-words">
                           {u.text_content}
@@ -135,9 +135,9 @@ export default async function ExhibitionGalleryPage({
 
                 // 사진 카드
                 return (
-                  <div key={u.id} className="border border-gray-800 flex gap-4 p-3">
+                  <div key={u.id} className="border border-white flex gap-4 p-3">
                     {url && (
-                      <div className="relative w-16 h-16 flex-shrink-0 bg-gray-900">
+                      <div className="relative w-16 h-16 flex-shrink-0 bg-black">
                         <Image
                           src={url}
                           alt="업로드 사진"
@@ -166,7 +166,7 @@ export default async function ExhibitionGalleryPage({
 
         {/* 전체 업로드 */}
         {allItems.length === 0 ? (
-          <div className="border border-dashed border-gray-800 py-24 text-center">
+          <div className="border border-dashed border-white py-24 text-center">
             <p className="text-sm text-gray-400">아직 업로드된 항목이 없습니다.</p>
           </div>
         ) : (
@@ -178,7 +178,7 @@ export default async function ExhibitionGalleryPage({
           <div className="mt-10 text-center">
             <Link
               href={`/e/${slug}`}
-              className="inline-block border border-gray-700 text-white px-6 py-2.5 text-sm font-medium hover:border-white transition-colors"
+              className="inline-block border border-white text-white px-6 py-2.5 text-sm font-medium hover:border-white transition-colors"
             >
               나도 업로드하기
             </Link>

@@ -20,7 +20,7 @@ export default function NewExhibitionPage() {
         </p>
       </div>
 
-      <div className="bg-black border border-gray-800 p-6">
+      <div className="bg-black border border-white p-6">
         <CreateExhibitionForm />
       </div>
     </div>

@@ -91,9 +91,9 @@ export default async function MyPage() {
     <div className="min-h-screen bg-black text-white">
       <ClaimUploads />
 
-      <header className="border-b border-neutral-800 px-5 py-4 flex items-center justify-between">
+      <header className="border-b border-white px-5 py-4 flex items-center justify-between">
         <Link href="/" className="text-base font-bold tracking-tight text-white">Openwall</Link>
-        <span className="text-sm text-neutral-500">내 페이지</span>
+        <span className="text-sm text-gray-400">내 페이지</span>
       </header>
 
       <main className="max-w-2xl mx-auto px-5 py-10">

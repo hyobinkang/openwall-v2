@@ -9,9 +9,9 @@ const STATUS_LABEL: Record<Exhibition['status'], string> = {
 }
 
 const STATUS_CLASS: Record<Exhibition['status'], string> = {
-  active: 'bg-emerald-900/30 text-emerald-400',
-  draft: 'bg-gray-800 text-gray-400',
-  closed: 'bg-gray-800 text-gray-500',
+  active: 'border border-white text-white',
+  draft: 'border border-gray-600 text-gray-400',
+  closed: 'border border-gray-600 text-gray-500',
 }
 
 function formatDate(iso: string | null) {
@@ -51,7 +51,7 @@ export default async function DashboardPage() {
       </div>
 
       {!exhibitions || exhibitions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center border border-dashed border-gray-800 rounded py-24 text-center">
+        <div className="flex flex-col items-center justify-center border border-dashed border-white rounded py-24 text-center">
           <p className="text-gray-400 text-sm">아직 생성된 전시가 없습니다.</p>
           <Link
             href="/dashboard/exhibitions/new"
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
             <Link
               key={ex.id}
               href={`/dashboard/exhibitions/${ex.id}`}
-              className="flex items-center justify-between bg-black border border-gray-800 px-5 py-4 hover:border-gray-600 transition-colors group"
+              className="flex items-center justify-between bg-black border border-white px-5 py-4 hover:border-white transition-colors group"
             >
               <div className="min-w-0">
                 <p className="font-medium text-white truncate">

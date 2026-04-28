@@ -17,7 +17,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-black">
-      <header className="sticky top-0 z-10 bg-black border-b border-gray-800">
+      <header className="sticky top-0 z-10 bg-black border-b border-white">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <Link
             href="/dashboard"

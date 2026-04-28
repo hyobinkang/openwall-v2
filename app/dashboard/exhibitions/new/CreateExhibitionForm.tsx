@@ -61,7 +61,7 @@ export function CreateExhibitionForm() {
           required
           placeholder="예: 빛과 그림자 — 2024"
           onChange={handleTitleChange}
-          className="w-full border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-white focus:outline-none transition-colors"
+          className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-white focus:outline-none transition-colors"
         />
       </div>
 
@@ -74,7 +74,7 @@ export function CreateExhibitionForm() {
           슬러그 <span className="text-red-400">*</span>
         </label>
         <div className="flex items-center gap-0">
-          <span className="border border-r-0 border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-gray-400 whitespace-nowrap select-none">
+          <span className="border border-r-0 border-white bg-black px-3 py-2.5 text-sm text-gray-400 whitespace-nowrap select-none">
             /e/
           </span>
           <input
@@ -85,10 +85,10 @@ export function CreateExhibitionForm() {
             value={slug}
             onChange={handleSlugChange}
             placeholder="light-and-shadow"
-            className={`flex-1 border bg-gray-900 text-white px-3 py-2.5 text-sm font-mono placeholder:text-gray-600 focus:outline-none transition-colors ${
+            className={`flex-1 border bg-black text-white px-3 py-2.5 text-sm font-mono placeholder:text-gray-500 focus:outline-none transition-colors ${
               slug && !slugValid
                 ? 'border-red-500 focus:border-red-400'
-                : 'border-gray-700 focus:border-white'
+                : 'border-white focus:border-white'
             }`}
           />
         </div>
@@ -113,7 +113,7 @@ export function CreateExhibitionForm() {
           name="description"
           rows={3}
           placeholder="전시에 대한 간단한 설명을 입력하세요."
-          className="w-full border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-white focus:outline-none transition-colors resize-none"
+          className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-white focus:outline-none transition-colors resize-none"
         />
       </div>
 
@@ -130,7 +130,7 @@ export function CreateExhibitionForm() {
             id="starts_at"
             name="starts_at"
             type="date"
-            className="w-full border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white focus:border-white focus:outline-none transition-colors"
+            className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white focus:border-white focus:outline-none transition-colors"
           />
         </div>
         <div className="space-y-1.5">
@@ -144,7 +144,7 @@ export function CreateExhibitionForm() {
             id="ends_at"
             name="ends_at"
             type="date"
-            className="w-full border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white focus:border-white focus:outline-none transition-colors"
+            className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white focus:border-white focus:outline-none transition-colors"
           />
         </div>
       </div>

@@ -60,7 +60,7 @@ export default async function ExhibitionVisitorPage({
   return (
     <div className="min-h-screen bg-black">
       {/* 헤더 */}
-      <header className="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
+      <header className="border-b border-white px-6 py-4 flex items-center justify-between">
         <Link href={user ? '/my' : '/'} className="text-sm font-bold tracking-tight text-white">
           Openwall
         </Link>
@@ -94,14 +94,14 @@ export default async function ExhibitionVisitorPage({
 
         {/* 상태별 분기 */}
         {exhibition.status === 'closed' ? (
-          <div className="border border-gray-800 px-6 py-8 text-center">
+          <div className="border border-white px-6 py-8 text-center">
             <p className="text-sm font-medium text-white">전시가 종료되었습니다.</p>
             <p className="mt-1 text-xs text-gray-400">
               업로드가 마감됐지만 전시 기록은 보존됩니다.
             </p>
           </div>
         ) : exhibition.status === 'draft' ? (
-          <div className="border border-dashed border-gray-800 px-6 py-8 text-center">
+          <div className="border border-dashed border-white px-6 py-8 text-center">
             <p className="text-sm text-gray-400">준비 중인 전시입니다.</p>
           </div>
         ) : (

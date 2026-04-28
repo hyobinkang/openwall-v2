@@ -13,7 +13,7 @@ export function SignupForm({ redirectTo }: { redirectTo?: string }) {
   if (state?.message) {
     return (
       <div className="space-y-6 text-center">
-        <div className="rounded border border-gray-800 bg-gray-900 px-6 py-8">
+        <div className="rounded border border-white bg-black px-6 py-8">
           <p className="text-sm font-medium text-white">{state.message}</p>
           <p className="mt-2 text-xs text-gray-400">
             스팸 폴더도 확인해 주세요.
@@ -48,7 +48,7 @@ export function SignupForm({ redirectTo }: { redirectTo?: string }) {
           required
           autoComplete="name"
           placeholder="홍길동"
-          className="w-full border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-white focus:outline-none transition-colors"
+          className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-white focus:outline-none transition-colors"
         />
       </div>
 
@@ -66,7 +66,7 @@ export function SignupForm({ redirectTo }: { redirectTo?: string }) {
           required
           autoComplete="email"
           placeholder="hello@example.com"
-          className="w-full border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-white focus:outline-none transition-colors"
+          className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-white focus:outline-none transition-colors"
         />
       </div>
 
@@ -84,7 +84,7 @@ export function SignupForm({ redirectTo }: { redirectTo?: string }) {
           required
           autoComplete="new-password"
           placeholder="6자 이상"
-          className="w-full border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-white focus:outline-none transition-colors"
+          className="w-full border border-white bg-black px-3 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-white focus:outline-none transition-colors"
         />
       </div>
 
