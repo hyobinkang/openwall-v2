@@ -14,7 +14,7 @@ export async function signup(_: AuthState, formData: FormData): Promise<AuthStat
   const password = formData.get('password') as string
   const rawRedirect = (formData.get('redirectTo') as string)?.trim()
   // 오픈 리다이렉트 방지: 반드시 / 로 시작하는 상대 경로만 허용
-  const redirectTo = rawRedirect?.startsWith('/') ? rawRedirect : '/dashboard'
+  const redirectTo = rawRedirect?.startsWith('/') ? rawRedirect : '/my'
 
   if (!name || !email || !password) {
     return { error: '모든 항목을 입력해 주세요.' }
@@ -62,7 +62,7 @@ export async function login(_: AuthState, formData: FormData): Promise<AuthState
 
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (!error) redirect('/dashboard')
+  if (!error) redirect('/my')
 
   // 이메일 미인증 상태
   if (error.code === 'email_not_confirmed') {
