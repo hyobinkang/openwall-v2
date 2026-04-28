@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ClaimUploads } from './ClaimUploads'
+import { ProfileSection } from './ProfileSection'
 
 function toKST(iso: string) {
   return new Date(iso).toLocaleString('ko-KR', {
@@ -83,9 +84,11 @@ export default async function MyPage() {
 
       <main className="max-w-2xl mx-auto px-5 py-10">
         <h1 className="text-xl font-bold tracking-tight mb-1">내 아카이브</h1>
-        <p className="text-sm text-neutral-400 mb-10">
+        <p className="text-sm text-neutral-400 mb-6">
           내가 참여한 전시와 남긴 기록들
         </p>
+
+        <ProfileSection initialName={myProfileName} joinedAt={user.created_at} />
 
         {groups.length === 0 ? (
           <div className="border border-dashed border-neutral-200 py-24 text-center">

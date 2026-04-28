@@ -7,7 +7,7 @@ import type { AuthState } from '@/app/actions/auth'
 
 const initial: AuthState = {}
 
-export function SignupForm() {
+export function SignupForm({ redirectTo }: { redirectTo?: string }) {
   const [state, formAction, pending] = useActionState(signup, initial)
 
   if (state?.message) {
@@ -31,6 +31,9 @@ export function SignupForm() {
 
   return (
     <form action={formAction} className="space-y-5">
+      {redirectTo && (
+        <input type="hidden" name="redirectTo" value={redirectTo} />
+      )}
       <div className="space-y-1">
         <label
           htmlFor="name"

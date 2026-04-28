@@ -3,6 +3,11 @@ import { SignupForm } from './SignupForm'
 
 export const metadata: Metadata = { title: '회원가입 — Openwall' }
 
-export default function SignupPage() {
-  return <SignupForm />
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirect?: string; uploadId?: string }>
+}) {
+  const { redirect: redirectTo } = await searchParams
+  return <SignupForm redirectTo={redirectTo} />
 }

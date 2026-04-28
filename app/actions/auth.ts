@@ -12,6 +12,9 @@ export async function signup(_: AuthState, formData: FormData): Promise<AuthStat
   const name = (formData.get('name') as string)?.trim()
   const email = (formData.get('email') as string)?.trim()
   const password = formData.get('password') as string
+  const rawRedirect = (formData.get('redirectTo') as string)?.trim()
+  // 오픈 리다이렉트 방지: 반드시 / 로 시작하는 상대 경로만 허용
+  const redirectTo = rawRedirect?.startsWith('/') ? rawRedirect : '/dashboard'
 
   if (!name || !email || !password) {
     return { error: '모든 항목을 입력해 주세요.' }
@@ -28,7 +31,7 @@ export async function signup(_: AuthState, formData: FormData): Promise<AuthStat
     password,
     options: {
       data: { name },
-      emailRedirectTo: `${origin}/auth/callback`,
+      emailRedirectTo: `${origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
     },
   })
 
@@ -44,7 +47,7 @@ export async function signup(_: AuthState, formData: FormData): Promise<AuthStat
     return { message: '가입 확인 이메일을 발송했습니다. 이메일을 확인해 주세요.' }
   }
 
-  redirect('/dashboard')
+  redirect(redirectTo)
 }
 
 export async function login(_: AuthState, formData: FormData): Promise<AuthState> {
