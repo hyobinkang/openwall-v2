@@ -44,7 +44,8 @@ export default async function ExhibitionGalleryPage({
   }
 
   function myDisplayName(u: { guest_name: string | null }): string {
-    return u.guest_name || myProfileName || '익명'
+    if (u.guest_name !== null) return u.guest_name || '익명'
+    return myProfileName || '익명'
   }
 
   const { data: uploads } = await supabase
@@ -59,9 +60,9 @@ export default async function ExhibitionGalleryPage({
     const { data } = u.storage_path
       ? supabase.storage.from('uploads').getPublicUrl(u.storage_path)
       : { data: { publicUrl: null } }
-    const label = u.guest_name
-      || (u.uploader_id === user?.id ? myProfileName : null)
-      || '익명'
+    const label = u.guest_name !== null
+      ? u.guest_name || '익명'
+      : (u.uploader_id === user?.id ? myProfileName : null) || '익명'
     return {
       id: u.id,
       type: u.type as 'photo' | 'text',
@@ -88,7 +89,15 @@ export default async function ExhibitionGalleryPage({
         <Link href={`/e/${slug}`} className="text-sm font-bold tracking-tight">
           Openwall
         </Link>
-        <span className="text-xs text-neutral-400">{exhibition.title}</span>
+        {user ? (
+          <Link href="/my" className="text-xs text-neutral-400 hover:text-neutral-900 transition-colors">
+            내 페이지
+          </Link>
+        ) : (
+          <Link href="/login" className="text-xs text-neutral-400 hover:text-neutral-900 transition-colors">
+            로그인
+          </Link>
+        )}
       </header>
 
       <main className="max-w-3xl mx-auto px-5 py-10">

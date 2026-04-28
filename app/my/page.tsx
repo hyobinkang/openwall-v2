@@ -35,7 +35,8 @@ export default async function MyPage() {
   const myProfileName = profile?.name ?? user.email?.split('@')[0] ?? null
 
   function displayName(upload: { guest_name: string | null }): string {
-    return upload.guest_name || myProfileName || '익명'
+    if (upload.guest_name !== null) return upload.guest_name || '익명'
+    return myProfileName || '익명'
   }
 
   const raw = uploads ?? []
