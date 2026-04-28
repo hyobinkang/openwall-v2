@@ -99,7 +99,7 @@ export default async function ExhibitionVisitorPage({
             <p className="text-sm text-neutral-400">준비 중인 전시입니다.</p>
           </div>
         ) : (
-          <UploadForm exhibitionId={exhibition.id} isLoggedIn={!!user} userName={userName} />
+          <UploadForm exhibitionId={exhibition.id} isLoggedIn={!!user} userName={userName} slug={slug} />
         )}
       </main>
     </div>

@@ -13,7 +13,6 @@ function GoogleSignInButton() {
   async function handleClick() {
     setLoading(true)
     const supabase = createClient()
-    // 로그인 후 /my 아카이브로 이동
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback?next=/my` },
@@ -37,12 +36,25 @@ function GoogleSignInButton() {
   )
 }
 
+type SavedData = {
+  uploadId: string
+  isLoggedIn: boolean
+  storagePath: string | null
+  textContent: string | null
+  guestName: string | null
+  photoPublicUrl: string | null
+}
+
 function SuccessView({
   isLoggedIn,
   uploadId,
+  slug,
+  onEditAgain,
 }: {
   isLoggedIn: boolean
   uploadId?: string
+  slug: string
+  onEditAgain: () => void
 }) {
   // 비회원 uploadId를 sessionStorage에 저장 → /my에서 귀속 처리
   useEffect(() => {
@@ -96,8 +108,15 @@ function SuccessView({
         </div>
       )}
 
+      <a
+        href={`/e/${slug}/gallery`}
+        className="flex items-center justify-center w-full border border-neutral-900 py-3 text-sm font-medium hover:bg-neutral-900 hover:text-white transition-colors"
+      >
+        다른 사람들 리뷰도 보기
+      </a>
+
       <button
-        onClick={() => window.location.reload()}
+        onClick={onEditAgain}
         className="w-full border border-neutral-200 py-3 text-sm text-neutral-500 hover:border-neutral-400 hover:text-neutral-900 transition-colors"
       >
         다시 업로드하기
@@ -112,10 +131,12 @@ export function UploadForm({
   exhibitionId,
   isLoggedIn,
   userName,
+  slug,
 }: {
   exhibitionId: string
   isLoggedIn: boolean
   userName?: string | null
+  slug: string
 }) {
   const boundAction = useMemo(
     () => submitUpload.bind(null, exhibitionId),
@@ -126,26 +147,78 @@ export function UploadForm({
     {}
   )
 
+  const [showSuccess, setShowSuccess] = useState(false)
+  const [savedData, setSavedData] = useState<SavedData | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editFormKey, setEditFormKey] = useState(0)
+
   const [preview, setPreview] = useState<string | null>(null)
+  const [existingStoragePath, setExistingStoragePath] = useState<string | null>(null)
   const [hasText, setHasText] = useState(false)
   const [hasPhoto, setHasPhoto] = useState(false)
   const [clientError, setClientError] = useState<string | null>(null)
   const [nameMode, setNameMode] = useState<NameMode>('member')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // 디버그: 브라우저 콘솔에서 isLoggedIn 값 확인
   useEffect(() => {
     console.log('[UploadForm] isLoggedIn:', isLoggedIn, '| userName:', userName)
   }, [isLoggedIn, userName])
 
-  if (state.success) {
-    return <SuccessView isLoggedIn={state.isLoggedIn ?? isLoggedIn} uploadId={state.uploadId} />
+  // nonce가 바뀔 때마다 새 성공 발생 (INSERT or UPDATE)
+  useEffect(() => {
+    if (!state.nonce) return
+    setSavedData({
+      uploadId: state.uploadId ?? '',
+      isLoggedIn: state.isLoggedIn ?? isLoggedIn,
+      storagePath: state.storagePath ?? null,
+      textContent: state.textContent ?? null,
+      guestName: state.guestName ?? null,
+      photoPublicUrl: state.photoPublicUrl ?? null,
+    })
+    setShowSuccess(true)
+    setIsEditing(false)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.nonce])
+
+  // 편집 모드 진입 시 폼 초기화
+  useEffect(() => {
+    if (!isEditing || !savedData) return
+    setPreview(savedData.photoPublicUrl)
+    setHasPhoto(!!savedData.photoPublicUrl)
+    setExistingStoragePath(savedData.storagePath)
+    setHasText(!!savedData.textContent)
+    setClientError(null)
+    setEditFormKey((k) => k + 1)
+    if (isLoggedIn) {
+      if (savedData.guestName === null) {
+        setNameMode('anonymous')
+      } else if (savedData.guestName === (userName ?? '')) {
+        setNameMode('member')
+      } else {
+        setNameMode('nickname')
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditing])
+
+  if (showSuccess && savedData) {
+    return (
+      <SuccessView
+        isLoggedIn={savedData.isLoggedIn}
+        uploadId={savedData.uploadId}
+        slug={slug}
+        onEditAgain={() => {
+          setShowSuccess(false)
+          setIsEditing(true)
+        }}
+      />
+    )
   }
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     setClientError(null)
     const file = e.target.files?.[0]
-    if (!file) { setHasPhoto(false); setPreview(null); return }
+    if (!file) { setHasPhoto(false); setPreview(null); setExistingStoragePath(null); return }
 
     if (!file.type.startsWith('image/')) {
       setClientError('이미지 파일만 업로드할 수 있습니다.')
@@ -159,11 +232,13 @@ export function UploadForm({
     }
     setHasPhoto(true)
     setPreview(URL.createObjectURL(file))
+    setExistingStoragePath(null)
   }
 
   function removePhoto() {
     setPreview(null)
     setHasPhoto(false)
+    setExistingStoragePath(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
@@ -180,6 +255,16 @@ export function UploadForm({
         }
       }}
     >
+      {/* 편집 모드 hidden fields */}
+      {isEditing && savedData && (
+        <>
+          <input type="hidden" name="upload_id" value={savedData.uploadId} />
+          {existingStoragePath && (
+            <input type="hidden" name="existing_storage_path" value={existingStoragePath} />
+          )}
+        </>
+      )}
+
       {/* 사진 업로드 */}
       <div className="space-y-1.5">
         <label className="block text-xs font-medium uppercase tracking-widest text-neutral-400">
@@ -235,9 +320,11 @@ export function UploadForm({
           텍스트 <span className="text-neutral-300">(선택)</span>
         </label>
         <textarea
+          key={`text-${editFormKey}`}
           id="text_content"
           name="text_content"
           rows={4}
+          defaultValue={isEditing ? (savedData?.textContent ?? '') : ''}
           placeholder="전시에 남길 글을 자유롭게 써주세요."
           onChange={(e) => setHasText(e.target.value.trim().length > 0)}
           className="w-full border border-neutral-200 px-3 py-2.5 text-sm placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none transition-colors resize-none"
@@ -252,7 +339,6 @@ export function UploadForm({
 
         {isLoggedIn ? (
           <>
-            {/* 라디오 버튼 */}
             <div className="flex flex-wrap gap-4">
               {(
                 [
@@ -275,7 +361,6 @@ export function UploadForm({
               ))}
             </div>
 
-            {/* 회원명 표시 (읽기 전용) */}
             {nameMode === 'member' && (
               <>
                 <input type="hidden" name="guest_name" value={userName ?? ''} />
@@ -285,11 +370,12 @@ export function UploadForm({
               </>
             )}
 
-            {/* 닉네임 직접 입력 */}
             {nameMode === 'nickname' && (
               <input
+                key={`nick-${editFormKey}`}
                 name="guest_name"
                 type="text"
+                defaultValue={isEditing ? (savedData?.guestName ?? '') : ''}
                 placeholder="닉네임을 입력하세요"
                 className="w-full border border-neutral-200 px-3 py-2.5 text-sm placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none transition-colors"
               />
@@ -299,8 +385,10 @@ export function UploadForm({
           </>
         ) : (
           <input
+            key={`guestname-${editFormKey}`}
             name="guest_name"
             type="text"
+            defaultValue={isEditing ? (savedData?.guestName ?? '') : ''}
             placeholder="닉네임을 입력하세요 (미입력 시 익명으로 표시)"
             className="w-full border border-neutral-200 px-3 py-2.5 text-sm placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none transition-colors"
           />
@@ -318,7 +406,7 @@ export function UploadForm({
         disabled={pending}
         className="w-full bg-neutral-900 py-3 text-sm font-medium tracking-wide text-white hover:bg-black transition-colors disabled:opacity-40"
       >
-        {pending ? '업로드 중…' : '업로드하기'}
+        {pending ? (isEditing ? '수정 중…' : '업로드 중…') : (isEditing ? '수정하기' : '업로드하기')}
       </button>
     </form>
   )
