@@ -11,7 +11,7 @@ export async function updateProfileName(name: string): Promise<{ error?: string 
 
   const { error } = await supabase
     .from('profiles')
-    .update({ name: name.trim() || null })
+    .update({ name: name.trim() || undefined })
     .eq('id', user.id)
 
   if (error) return { error: error.message }
