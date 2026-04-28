@@ -66,7 +66,7 @@ export async function submitUpload(
 
   if (updateId) {
     const admin = createAdminClient()
-    const updateFields = { guest_name: guestName, type, storage_path: storagePath, text_content: textContent }
+    const updateFields = { guest_name: guestName, type: type as 'photo' | 'text', storage_path: storagePath, text_content: textContent }
     const base = admin.from('uploads').update(updateFields).eq('id', updateId)
     const { error: dbError } = await (user ? base.eq('uploader_id', user.id) : base)
 
