@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { ClaimUploads } from './ClaimUploads'
 import { ProfileSection } from './ProfileSection'
+import { MyPageTabs, type HostedExhibition, type ParticipatedGroup, type UploadItem } from './MyPageTabs'
 
 function toKST(iso: string) {
   return new Date(iso).toLocaleString('ko-KR', {
@@ -20,7 +20,7 @@ export default async function MyPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: uploads }, { data: profile }] = await Promise.all([
+  const [{ data: uploads }, { data: profile }, { data: exhibitions }] = await Promise.all([
     supabase
       .from('uploads')
       .select('id, type, storage_path, text_content, guest_name, created_at, exhibition_id, exhibitions(id, title, slug)')
@@ -31,6 +31,11 @@ export default async function MyPage() {
       .select('name')
       .eq('id', user.id)
       .single(),
+    supabase
+      .from('exhibitions')
+      .select('id, title, slug, status, created_at')
+      .eq('organizer_id', user.id)
+      .order('created_at', { ascending: false }),
   ])
 
   const myProfileName = profile?.name ?? user.email?.split('@')[0] ?? null
@@ -45,124 +50,55 @@ export default async function MyPage() {
     return myProfileName || '익명'
   }
 
-  const raw = uploads ?? []
+  function getPublicUrl(path: string | null): string | null {
+    if (!path) return null
+    return supabase.storage.from('uploads').getPublicUrl(path).data.publicUrl
+  }
 
-  // Group by exhibition
-  const grouped = new Map<string, {
-    exhibitionId: string
-    title: string
-    slug: string
-    items: typeof raw
-  }>()
+  // 주최한 전시
+  const hosted: HostedExhibition[] = (exhibitions ?? []).map((ex) => ({
+    id: ex.id,
+    title: ex.title,
+    slug: ex.slug,
+    status: ex.status,
+    createdAt: ex.created_at,
+  }))
+
+  // 참여한 전시 (업로드 기준, 전시별 그룹)
+  const raw = uploads ?? []
+  const groupMap = new Map<string, ParticipatedGroup>()
 
   for (const u of raw) {
     const ex = u.exhibitions as { id: string; title: string; slug: string } | null
     if (!ex) continue
-    if (!grouped.has(ex.id)) {
-      grouped.set(ex.id, { exhibitionId: ex.id, title: ex.title, slug: ex.slug, items: [] })
+    if (!groupMap.has(ex.id)) {
+      groupMap.set(ex.id, { exhibitionId: ex.id, title: ex.title, slug: ex.slug, items: [] })
     }
-    grouped.get(ex.id)!.items.push(u)
+    const item: UploadItem = {
+      id: u.id,
+      type: u.type as 'photo' | 'text',
+      publicUrl: u.type === 'photo' ? getPublicUrl(u.storage_path) : null,
+      textContent: u.text_content,
+      displayName: displayName(u),
+      createdAt: toKST(u.created_at),
+    }
+    groupMap.get(ex.id)!.items.push(item)
   }
 
-  const groups = Array.from(grouped.values())
-
-  function getPublicUrl(path: string | null): string | null {
-    if (!path) return null
-    const { data } = supabase.storage.from('uploads').getPublicUrl(path)
-    return data.publicUrl
-  }
+  const participated: ParticipatedGroup[] = Array.from(groupMap.values())
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-black text-white">
       <ClaimUploads />
 
-      {/* 헤더 */}
-      <header className="border-b border-neutral-100 px-5 py-4 flex items-center justify-between">
-        <Link href="/" className="text-base font-bold tracking-tight">Openwall</Link>
-        <span className="text-sm text-neutral-400">내 아카이브</span>
+      <header className="border-b border-neutral-800 px-5 py-4 flex items-center justify-between">
+        <Link href="/" className="text-base font-bold tracking-tight text-white">Openwall</Link>
+        <span className="text-sm text-neutral-500">내 페이지</span>
       </header>
 
       <main className="max-w-2xl mx-auto px-5 py-10">
-        <h1 className="text-xl font-bold tracking-tight mb-1">내 아카이브</h1>
-        <p className="text-sm text-neutral-400 mb-6">
-          내가 참여한 전시와 남긴 기록들
-        </p>
-
         <ProfileSection initialName={myProfileName} joinedAt={user.created_at} />
-
-        {groups.length === 0 ? (
-          <div className="border border-dashed border-neutral-200 py-24 text-center">
-            <p className="text-sm text-neutral-400">아직 참여한 전시가 없습니다.</p>
-            <p className="mt-1 text-xs text-neutral-300">
-              전시 QR 코드를 스캔하고 사진이나 글을 남겨보세요.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-12">
-            {groups.map((group) => (
-              <section key={group.exhibitionId}>
-                <div className="flex items-baseline justify-between mb-4">
-                  <h2 className="text-base font-semibold">{group.title}</h2>
-                  <Link
-                    href={`/e/${group.slug}/gallery`}
-                    className="text-xs text-neutral-400 hover:text-neutral-900 transition-colors"
-                  >
-                    전체 업로드 보기 →
-                  </Link>
-                </div>
-
-                <div className="space-y-3">
-                  {group.items.map((u) => {
-                    const url = u.type === 'photo' ? getPublicUrl(u.storage_path) : null
-
-                    // 텍스트 전용 카드
-                    if (u.type === 'text') {
-                      return (
-                        <div key={u.id} className="border border-neutral-100 px-4 py-3">
-                          {u.text_content && (
-                            <p className="text-sm text-neutral-800 leading-relaxed line-clamp-3 break-words">
-                              {u.text_content}
-                            </p>
-                          )}
-                          <p className="text-xs text-neutral-400 mt-1.5">
-                            {displayName(u)} · {toKST(u.created_at)}
-                          </p>
-                        </div>
-                      )
-                    }
-
-                    // 사진 카드
-                    return (
-                      <div key={u.id} className="border border-neutral-100 flex gap-4 p-3">
-                        {url && (
-                          <div className="relative w-20 h-20 flex-shrink-0 bg-neutral-100">
-                            <Image
-                              src={url}
-                              alt="업로드 사진"
-                              fill
-                              sizes="80px"
-                              className="object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0 flex flex-col justify-between">
-                          {u.text_content && (
-                            <p className="text-sm text-neutral-800 leading-relaxed line-clamp-2 break-words">
-                              {u.text_content}
-                            </p>
-                          )}
-                          <p className="text-xs text-neutral-400 mt-1">
-                            {displayName(u)} · {toKST(u.created_at)}
-                          </p>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
+        <MyPageTabs hosted={hosted} participated={participated} />
       </main>
     </div>
   )

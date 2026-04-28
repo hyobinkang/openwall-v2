@@ -29,6 +29,12 @@ export default async function DashboardLayout({
             <span className="text-sm text-neutral-500 hidden sm:block">
               {displayName}
             </span>
+            <Link
+              href="/my"
+              className="text-sm text-neutral-400 hover:text-neutral-900 transition-colors"
+            >
+              내 페이지
+            </Link>
             <form action={logout}>
               <button
                 type="submit"

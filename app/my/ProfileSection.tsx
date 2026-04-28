@@ -48,7 +48,7 @@ export function ProfileSection({
   }
 
   return (
-    <div className="border border-neutral-100 px-5 py-4 mb-10">
+    <div className="mb-10">
       <div className="flex items-center gap-3">
         {isEditing ? (
           <>
@@ -60,38 +60,38 @@ export function ProfileSection({
                 if (e.key === 'Escape') handleCancel()
               }}
               autoFocus
-              className="flex-1 border border-neutral-300 px-2 py-1 text-sm focus:border-neutral-900 focus:outline-none transition-colors"
+              className="flex-1 bg-transparent border border-neutral-700 px-2 py-1 text-sm text-white focus:border-white focus:outline-none transition-colors"
             />
             <button
               onClick={handleSave}
               disabled={isPending}
-              className="text-xs font-medium text-neutral-900 hover:text-black disabled:opacity-40 transition-colors"
+              className="text-xs font-medium text-white hover:text-neutral-300 disabled:opacity-40 transition-colors"
             >
               {isPending ? '저장 중…' : '저장'}
             </button>
             <button
               onClick={handleCancel}
-              className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors"
+              className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors"
             >
               취소
             </button>
           </>
         ) : (
           <>
-            <span className="text-sm font-medium text-neutral-900">
+            <span className="text-base font-semibold text-white">
               {name || '(이름 없음)'}
             </span>
             <button
               onClick={handleEdit}
-              className="text-xs text-neutral-400 hover:text-neutral-700 transition-colors"
+              className="text-xs text-neutral-500 hover:text-neutral-300 transition-colors"
             >
               수정
             </button>
           </>
         )}
       </div>
-      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
-      <p className="mt-1 text-xs text-neutral-400">Joined {joined}</p>
+      {error && <p className="mt-1 text-xs text-red-400">{error}</p>}
+      <p className="mt-1 text-xs text-neutral-500">Joined {joined}</p>
     </div>
   )
 }
