@@ -73,9 +73,9 @@ export async function submitUpload(
     console.log('[submitUpload] UPDATE 시도 — uploadId:', updateId, '| user.id:', user?.id ?? null, '| guestName:', guestName)
 
     const base = admin.from('uploads').update(updateFields).eq('id', updateId)
-    const { error: dbError, count } = await (user ? base.eq('uploader_id', user.id) : base).select('id', { count: 'exact', head: true })
+    const { data: updatedRows, error: dbError } = await (user ? base.eq('uploader_id', user.id) : base).select('id')
 
-    console.log('[submitUpload] UPDATE 결과 — count:', count, '| error:', dbError?.message ?? null)
+    console.log('[submitUpload] UPDATE 결과 — updatedRows:', updatedRows, '| error:', dbError?.message ?? null)
 
     if (dbError) {
       if (hasNewPhoto && storagePath) await supabase.storage.from('uploads').remove([storagePath])
