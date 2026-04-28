@@ -9,9 +9,9 @@ const STATUS_LABEL: Record<Exhibition['status'], string> = {
 }
 
 const STATUS_CLASS: Record<Exhibition['status'], string> = {
-  active: 'bg-emerald-50 text-emerald-700',
-  draft: 'bg-neutral-100 text-neutral-500',
-  closed: 'bg-neutral-100 text-neutral-400',
+  active: 'bg-emerald-900/30 text-emerald-400',
+  draft: 'bg-gray-800 text-gray-400',
+  closed: 'bg-gray-800 text-gray-500',
 }
 
 function formatDate(iso: string | null) {
@@ -38,24 +38,24 @@ export default async function DashboardPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">나의 전시</h1>
-          <p className="mt-1 text-sm text-neutral-400">
+          <p className="mt-1 text-sm text-gray-400">
             {exhibitions?.length ?? 0}개의 전시
           </p>
         </div>
         <Link
           href="/dashboard/exhibitions/new"
-          className="bg-neutral-900 text-white text-sm font-medium px-4 py-2.5 hover:bg-black transition-colors"
+          className="bg-white text-black text-sm font-medium px-4 py-2.5 hover:bg-gray-100 transition-colors"
         >
           + 새 전시 만들기
         </Link>
       </div>
 
       {!exhibitions || exhibitions.length === 0 ? (
-        <div className="flex flex-col items-center justify-center border border-dashed border-neutral-200 rounded py-24 text-center">
-          <p className="text-neutral-400 text-sm">아직 생성된 전시가 없습니다.</p>
+        <div className="flex flex-col items-center justify-center border border-dashed border-gray-800 rounded py-24 text-center">
+          <p className="text-gray-400 text-sm">아직 생성된 전시가 없습니다.</p>
           <Link
             href="/dashboard/exhibitions/new"
-            className="mt-3 text-sm font-medium text-neutral-900 underline underline-offset-2 hover:text-black"
+            className="mt-3 text-sm font-medium text-white underline underline-offset-2 hover:text-gray-200"
           >
             첫 번째 전시 만들기 →
           </Link>
@@ -66,13 +66,13 @@ export default async function DashboardPage() {
             <Link
               key={ex.id}
               href={`/dashboard/exhibitions/${ex.id}`}
-              className="flex items-center justify-between bg-white border border-neutral-200 px-5 py-4 hover:border-neutral-400 transition-colors group"
+              className="flex items-center justify-between bg-black border border-gray-800 px-5 py-4 hover:border-gray-600 transition-colors group"
             >
               <div className="min-w-0">
-                <p className="font-medium text-neutral-900 group-hover:text-black truncate">
+                <p className="font-medium text-white truncate">
                   {ex.title}
                 </p>
-                <p className="mt-0.5 text-xs text-neutral-400 font-mono">
+                <p className="mt-0.5 text-xs text-gray-400 font-mono">
                   /e/{ex.slug}
                   {ex.starts_at && (
                     <span className="ml-3 font-sans">

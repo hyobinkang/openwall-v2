@@ -49,7 +49,7 @@ export function CreateExhibitionForm() {
       <div className="space-y-1.5">
         <label
           htmlFor="title"
-          className="block text-xs font-medium uppercase tracking-widest text-neutral-400"
+          className="block text-xs font-medium uppercase tracking-widest text-gray-400"
         >
           전시 제목 <span className="text-red-400">*</span>
         </label>
@@ -61,7 +61,7 @@ export function CreateExhibitionForm() {
           required
           placeholder="예: 빛과 그림자 — 2024"
           onChange={handleTitleChange}
-          className="w-full border border-neutral-200 bg-white px-3 py-2.5 text-sm placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none transition-colors"
+          className="w-full border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-white focus:outline-none transition-colors"
         />
       </div>
 
@@ -69,12 +69,12 @@ export function CreateExhibitionForm() {
       <div className="space-y-1.5">
         <label
           htmlFor="slug"
-          className="block text-xs font-medium uppercase tracking-widest text-neutral-400"
+          className="block text-xs font-medium uppercase tracking-widest text-gray-400"
         >
           슬러그 <span className="text-red-400">*</span>
         </label>
         <div className="flex items-center gap-0">
-          <span className="border border-r-0 border-neutral-200 bg-neutral-50 px-3 py-2.5 text-sm text-neutral-400 whitespace-nowrap select-none">
+          <span className="border border-r-0 border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-gray-400 whitespace-nowrap select-none">
             /e/
           </span>
           <input
@@ -85,14 +85,14 @@ export function CreateExhibitionForm() {
             value={slug}
             onChange={handleSlugChange}
             placeholder="light-and-shadow"
-            className={`flex-1 border px-3 py-2.5 text-sm font-mono placeholder:text-neutral-300 focus:outline-none transition-colors ${
+            className={`flex-1 border bg-gray-900 text-white px-3 py-2.5 text-sm font-mono placeholder:text-gray-600 focus:outline-none transition-colors ${
               slug && !slugValid
-                ? 'border-red-300 focus:border-red-400'
-                : 'border-neutral-200 focus:border-neutral-900'
+                ? 'border-red-500 focus:border-red-400'
+                : 'border-gray-700 focus:border-white'
             }`}
           />
         </div>
-        <p className="text-xs text-neutral-400">
+        <p className="text-xs text-gray-500">
           영문 소문자, 숫자, 하이픈만 사용 가능. QR 코드 URL에 쓰입니다.
           {slug && !slugValid && (
             <span className="text-red-400 ml-2">올바르지 않은 형식입니다.</span>
@@ -104,16 +104,16 @@ export function CreateExhibitionForm() {
       <div className="space-y-1.5">
         <label
           htmlFor="description"
-          className="block text-xs font-medium uppercase tracking-widest text-neutral-400"
+          className="block text-xs font-medium uppercase tracking-widest text-gray-400"
         >
-          전시 설명 <span className="text-neutral-300">(선택)</span>
+          전시 설명 <span className="text-gray-600">(선택)</span>
         </label>
         <textarea
           id="description"
           name="description"
           rows={3}
           placeholder="전시에 대한 간단한 설명을 입력하세요."
-          className="w-full border border-neutral-200 bg-white px-3 py-2.5 text-sm placeholder:text-neutral-300 focus:border-neutral-900 focus:outline-none transition-colors resize-none"
+          className="w-full border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-white focus:outline-none transition-colors resize-none"
         />
       </div>
 
@@ -122,29 +122,29 @@ export function CreateExhibitionForm() {
         <div className="space-y-1.5">
           <label
             htmlFor="starts_at"
-            className="block text-xs font-medium uppercase tracking-widest text-neutral-400"
+            className="block text-xs font-medium uppercase tracking-widest text-gray-400"
           >
-            시작일 <span className="text-neutral-300">(선택)</span>
+            시작일 <span className="text-gray-600">(선택)</span>
           </label>
           <input
             id="starts_at"
             name="starts_at"
             type="date"
-            className="w-full border border-neutral-200 bg-white px-3 py-2.5 text-sm focus:border-neutral-900 focus:outline-none transition-colors"
+            className="w-full border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white focus:border-white focus:outline-none transition-colors"
           />
         </div>
         <div className="space-y-1.5">
           <label
             htmlFor="ends_at"
-            className="block text-xs font-medium uppercase tracking-widest text-neutral-400"
+            className="block text-xs font-medium uppercase tracking-widest text-gray-400"
           >
-            종료일 <span className="text-neutral-300">(선택)</span>
+            종료일 <span className="text-gray-600">(선택)</span>
           </label>
           <input
             id="ends_at"
             name="ends_at"
             type="date"
-            className="w-full border border-neutral-200 bg-white px-3 py-2.5 text-sm focus:border-neutral-900 focus:outline-none transition-colors"
+            className="w-full border border-gray-700 bg-gray-900 px-3 py-2.5 text-sm text-white focus:border-white focus:outline-none transition-colors"
           />
         </div>
       </div>
@@ -158,7 +158,7 @@ export function CreateExhibitionForm() {
       <button
         type="submit"
         disabled={pending || (slug.length > 0 && !slugValid)}
-        className="w-full bg-neutral-900 py-3 text-sm font-medium tracking-wide text-white transition-colors hover:bg-black disabled:opacity-40"
+        className="w-full bg-white py-3 text-sm font-medium tracking-wide text-black transition-colors hover:bg-gray-100 disabled:opacity-40"
       >
         {pending ? '생성 중…' : '전시 생성하기'}
       </button>

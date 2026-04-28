@@ -25,18 +25,18 @@ function Modal({ item, onClose }: { item: UploadItem; onClose: () => void }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4"
       onClick={onClose}
     >
       <div
-        className="bg-white w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        className="bg-gray-900 w-full max-w-lg max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 닫기 버튼 */}
         <div className="flex justify-end px-4 pt-4">
           <button
             onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-900 transition-colors text-lg leading-none"
+            className="text-gray-400 hover:text-white transition-colors text-lg leading-none"
             aria-label="닫기"
           >
             ×
@@ -59,20 +59,20 @@ function Modal({ item, onClose }: { item: UploadItem; onClose: () => void }) {
 
           {/* 텍스트 */}
           {item.text_content && (
-            <p className="text-sm text-neutral-800 leading-relaxed whitespace-pre-wrap break-words">
+            <p className="text-sm text-gray-200 leading-relaxed whitespace-pre-wrap break-words">
               {item.text_content}
             </p>
           )}
 
           {/* 캡션 */}
           {item.caption && (
-            <p className="text-xs text-neutral-500 italic border-t border-neutral-100 pt-3">
+            <p className="text-xs text-gray-400 italic border-t border-gray-800 pt-3">
               {item.caption}
             </p>
           )}
 
           {/* 메타 */}
-          <p className="text-xs text-neutral-400 border-t border-neutral-100 pt-3">
+          <p className="text-xs text-gray-500 border-t border-gray-800 pt-3">
             {item.uploaderLabel} · {item.createdAt}
           </p>
         </div>
@@ -93,11 +93,11 @@ function UploadCard({
     <button
       type="button"
       onClick={onClick}
-      className="text-left bg-white border border-neutral-200 hover:border-neutral-400 transition-colors w-full overflow-hidden"
+      className="text-left bg-black border border-gray-800 hover:border-gray-600 transition-colors w-full overflow-hidden"
     >
       {/* 이미지 섹션 */}
       {item.type === 'photo' && item.publicUrl && (
-        <div className="relative w-full aspect-[4/3] bg-neutral-100">
+        <div className="relative w-full aspect-[4/3] bg-gray-900">
           <Image
             src={item.publicUrl}
             alt={item.caption ?? '업로드 사진'}
@@ -110,8 +110,8 @@ function UploadCard({
 
       {/* 텍스트 카드 헤더 (텍스트 전용) */}
       {item.type === 'text' && (
-        <div className="bg-neutral-50 px-4 py-5 min-h-[100px] flex items-start">
-          <p className="text-sm text-neutral-700 leading-relaxed line-clamp-3">
+        <div className="bg-gray-900 px-4 py-5 min-h-[100px] flex items-start">
+          <p className="text-sm text-gray-200 leading-relaxed line-clamp-3">
             {item.text_content}
           </p>
         </div>
@@ -121,14 +121,14 @@ function UploadCard({
       <div className="px-3 py-2.5 space-y-0.5">
         {/* 캡션 또는 텍스트 미리보기 */}
         {item.type === 'photo' && (item.caption || item.text_content) && (
-          <p className="text-xs text-neutral-600 line-clamp-2">
+          <p className="text-xs text-gray-400 line-clamp-2">
             {item.caption ?? item.text_content}
           </p>
         )}
         {item.type === 'text' && item.caption && (
-          <p className="text-xs text-neutral-500 italic line-clamp-1">{item.caption}</p>
+          <p className="text-xs text-gray-500 italic line-clamp-1">{item.caption}</p>
         )}
-        <p className="text-xs text-neutral-400">
+        <p className="text-xs text-gray-500">
           {item.uploaderLabel} · {item.createdAt}
         </p>
       </div>

@@ -74,7 +74,7 @@ export default async function ExhibitionUploadsPage({
       <div className="flex items-center gap-2 mb-8">
         <Link
           href={`/dashboard/exhibitions/${id}`}
-          className="text-xs text-neutral-400 hover:text-neutral-900 transition-colors"
+          className="text-xs text-gray-400 hover:text-white transition-colors"
         >
           ← {exhibition.title}
         </Link>
@@ -83,16 +83,16 @@ export default async function ExhibitionUploadsPage({
       <div className="flex items-end justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">업로드 목록</h1>
-          <p className="mt-1 text-sm text-neutral-400">
+          <p className="mt-1 text-sm text-gray-400">
             전체 {items.length}개 &middot; 사진 {photoCount}개 &middot; 텍스트 {textCount}개
           </p>
         </div>
       </div>
 
       {items.length === 0 ? (
-        <div className="border border-dashed border-neutral-200 py-24 text-center">
-          <p className="text-sm text-neutral-400">아직 업로드된 항목이 없습니다.</p>
-          <p className="mt-1 text-xs text-neutral-300">
+        <div className="border border-dashed border-gray-800 py-24 text-center">
+          <p className="text-sm text-gray-400">아직 업로드된 항목이 없습니다.</p>
+          <p className="mt-1 text-xs text-gray-600">
             QR 코드를 공유하면 관람객이 사진과 텍스트를 올릴 수 있습니다.
           </p>
         </div>
