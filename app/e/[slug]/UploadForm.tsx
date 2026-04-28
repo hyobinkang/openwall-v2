@@ -381,7 +381,10 @@ export function UploadForm({
               />
             )}
 
-            {/* 익명: guest_name 미전송 → null로 저장 */}
+            {/* 익명: "익명" 문자열로 저장 (null은 비로그인 미입력 구분용) */}
+            {nameMode === 'anonymous' && (
+              <input type="hidden" name="guest_name" value="익명" />
+            )}
           </>
         ) : (
           <input

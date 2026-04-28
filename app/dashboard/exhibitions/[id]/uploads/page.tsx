@@ -17,7 +17,10 @@ function uploaderLabel(upload: {
   uploader_id: string | null
   guest_name: string | null
 }): string {
-  if (upload.guest_name !== null) return upload.guest_name || '익명'
+  if (upload.guest_name !== null) {
+    const gn = upload.guest_name
+    return !gn || gn === '익명' ? '익명' : gn
+  }
   return '익명'
 }
 

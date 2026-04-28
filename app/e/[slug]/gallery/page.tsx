@@ -44,7 +44,10 @@ export default async function ExhibitionGalleryPage({
   }
 
   function myDisplayName(u: { guest_name: string | null }): string {
-    if (u.guest_name !== null) return u.guest_name || '익명'
+    if (u.guest_name !== null) {
+      const gn = u.guest_name
+      return !gn || gn === '익명' ? '익명' : gn
+    }
     return myProfileName || '익명'
   }
 
@@ -61,7 +64,7 @@ export default async function ExhibitionGalleryPage({
       ? supabase.storage.from('uploads').getPublicUrl(u.storage_path)
       : { data: { publicUrl: null } }
     const label = u.guest_name !== null
-      ? u.guest_name || '익명'
+      ? (!u.guest_name || u.guest_name === '익명' ? '익명' : u.guest_name)
       : (u.uploader_id === user?.id ? myProfileName : null) || '익명'
     return {
       id: u.id,
