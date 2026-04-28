@@ -46,10 +46,16 @@ export default async function ExhibitionVisitorPage({
   if (!exhibition) notFound()
 
   const { data: { user } } = await supabase.auth.getUser()
-  const userName: string | null =
-    user?.user_metadata?.name ??
-    user?.user_metadata?.full_name ??
-    (user?.email ? user.email.split('@')[0] : null)
+
+  let userName: string | null = null
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', user.id)
+      .single()
+    userName = profile?.name ?? user.email?.split('@')[0] ?? null
+  }
 
   return (
     <div className="min-h-screen bg-white">
