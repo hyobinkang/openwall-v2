@@ -92,11 +92,10 @@ export default async function ExhibitionDetailPage({
           </div>
         </div>
         <Link
-          href={`/e/${ex.slug}`}
-          target="_blank"
+          href={`/dashboard/exhibitions/${id}/edit`}
           className="shrink-0 text-xs border border-subtle text-fg px-3 py-1.5 hover:border-fg transition-colors whitespace-nowrap"
         >
-          전시 보기 ↗
+          수정
         </Link>
       </div>
 

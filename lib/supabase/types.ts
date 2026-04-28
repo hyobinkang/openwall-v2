@@ -32,6 +32,7 @@ export type Database = {
           description: string | null
           slug: string
           cover_image_path: string | null
+          cover_images: string[] | null
           status: 'draft' | 'active' | 'closed'
           starts_at: string | null
           ends_at: string | null
@@ -44,6 +45,7 @@ export type Database = {
           description?: string | null
           slug: string
           cover_image_path?: string | null
+          cover_images?: string[] | null
           status?: 'draft' | 'active' | 'closed'
           starts_at?: string | null
           ends_at?: string | null
@@ -54,6 +56,7 @@ export type Database = {
           description?: string | null
           slug?: string
           cover_image_path?: string | null
+          cover_images?: string[] | null
           status?: 'draft' | 'active' | 'closed'
           starts_at?: string | null
           ends_at?: string | null

@@ -9,10 +9,10 @@ export default function NewExhibitionPage() {
     <div className="max-w-lg">
       <div className="mb-8">
         <Link
-          href="/dashboard"
+          href="/my"
           className="text-xs text-secondary hover:text-fg transition-colors"
         >
-          ← 대시보드로
+          ← 내 페이지로
         </Link>
         <h1 className="mt-3 text-2xl font-bold tracking-tight">새 전시 만들기</h1>
         <p className="mt-1 text-sm text-secondary">

@@ -2,54 +2,53 @@
 
 import { useTransition, useRef, useState } from 'react'
 import Image from 'next/image'
-import { createExhibition } from '@/app/actions/exhibitions'
+import { updateExhibition } from '@/app/actions/exhibitions'
 
 const MAX_COVERS = 10
 const MAX_COVER_MB = 10
 
-function toSlug(title: string): string {
-  const ascii = title
-    .toLowerCase()
-    .replace(/[^\x00-\x7F]/g, '')
-    .replace(/[^a-z0-9\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .slice(0, 30)
-  return ascii || `ex-${Date.now().toString(36)}`
-}
+const STATUS_OPTIONS = [
+  { value: 'active', label: '진행 중' },
+  { value: 'draft', label: '초안' },
+  { value: 'closed', label: '종료' },
+] as const
 
-function isValidSlug(slug: string) {
-  return /^[a-z0-9-]+$/.test(slug) && slug.length > 0
-}
+type InitialCover = { path: string; url: string }
 
-export function CreateExhibitionForm() {
+export function EditExhibitionForm({
+  id,
+  title: initialTitle,
+  description: initialDescription,
+  slug,
+  startsAt,
+  endsAt,
+  status: initialStatus,
+  initialCovers,
+}: {
+  id: string
+  title: string
+  description: string | null
+  slug: string
+  startsAt: string
+  endsAt: string
+  status: 'draft' | 'active' | 'closed'
+  initialCovers: InitialCover[]
+}) {
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  const [slug, setSlug] = useState('')
-  const [slugTouched, setSlugTouched] = useState(false)
-
-  const [coverFiles, setCoverFiles] = useState<File[]>([])
-  const [coverPreviews, setCoverPreviews] = useState<string[]>([])
+  const [existingCovers, setExistingCovers] = useState<InitialCover[]>(initialCovers)
+  const [newFiles, setNewFiles] = useState<File[]>([])
+  const [newPreviews, setNewPreviews] = useState<string[]>([])
   const coverPickerRef = useRef<HTMLInputElement>(null)
 
-  const slugValid = isValidSlug(slug)
-
-  function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!slugTouched) setSlug(toSlug(e.target.value))
-  }
-
-  function handleSlugChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setSlugTouched(true)
-    setSlug(e.target.value)
-  }
+  const totalCovers = existingCovers.length + newFiles.length
 
   function handleCoverPick(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? [])
     e.target.value = ''
 
-    const remaining = MAX_COVERS - coverFiles.length
+    const remaining = MAX_COVERS - totalCovers
     if (remaining <= 0) return
 
     const valid: File[] = []
@@ -63,36 +62,45 @@ export function CreateExhibitionForm() {
       valid.push(f)
       previews.push(URL.createObjectURL(f))
     }
-    setCoverFiles((prev) => [...prev, ...valid])
-    setCoverPreviews((prev) => [...prev, ...previews])
+    setNewFiles((prev) => [...prev, ...valid])
+    setNewPreviews((prev) => [...prev, ...previews])
   }
 
-  function removeCover(i: number) {
-    URL.revokeObjectURL(coverPreviews[i])
-    setCoverFiles((prev) => prev.filter((_, idx) => idx !== i))
-    setCoverPreviews((prev) => prev.filter((_, idx) => idx !== i))
+  function removeExisting(path: string) {
+    setExistingCovers((prev) => prev.filter((c) => c.path !== path))
+  }
+
+  function removeNew(i: number) {
+    URL.revokeObjectURL(newPreviews[i])
+    setNewFiles((prev) => prev.filter((_, idx) => idx !== i))
+    setNewPreviews((prev) => prev.filter((_, idx) => idx !== i))
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
 
-    if (!slugValid) {
-      setError('올바른 슬러그를 입력해 주세요.')
-      return
+    const fd = new FormData(e.currentTarget)
+
+    // 삭제된 기존 커버 경로 추가
+    const keptPaths = new Set(existingCovers.map((c) => c.path))
+    for (const { path } of initialCovers) {
+      if (!keptPaths.has(path)) fd.append('remove_cover', path)
     }
 
-    const fd = new FormData(e.currentTarget)
-    for (const f of coverFiles) fd.append('covers', f)
+    // 새 커버 파일 추가
+    for (const f of newFiles) fd.append('covers', f)
 
     startTransition(async () => {
-      const result = await createExhibition(fd)
+      const result = await updateExhibition(fd)
       if (result?.error) setError(result.error)
     })
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <input type="hidden" name="id" value={id} />
+
       {/* 제목 */}
       <div className="space-y-1.5">
         <label
@@ -106,45 +114,25 @@ export function CreateExhibitionForm() {
           name="title"
           type="text"
           required
-          placeholder="예: 빛과 그림자 — 2024"
-          onChange={handleTitleChange}
+          defaultValue={initialTitle}
           className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg placeholder:text-muted focus:border-fg focus:outline-none transition-colors"
         />
       </div>
 
-      {/* 슬러그 */}
+      {/* 슬러그 (읽기 전용) */}
       <div className="space-y-1.5">
-        <label
-          htmlFor="slug"
-          className="block text-xs font-medium uppercase tracking-widest text-secondary"
-        >
-          슬러그 <span className="text-red-400">*</span>
-        </label>
+        <span className="block text-xs font-medium uppercase tracking-widest text-secondary">
+          슬러그
+        </span>
         <div className="flex items-center">
-          <span className="border border-r-0 border-subtle bg-surface px-3 py-2.5 text-sm text-secondary whitespace-nowrap select-none">
+          <span className="border border-subtle bg-surface px-3 py-2.5 text-sm text-secondary whitespace-nowrap select-none">
             /e/
           </span>
-          <input
-            id="slug"
-            name="slug"
-            type="text"
-            required
-            value={slug}
-            onChange={handleSlugChange}
-            placeholder="light-and-shadow"
-            className={`flex-1 border bg-surface text-fg px-3 py-2.5 text-sm font-mono placeholder:text-muted focus:outline-none transition-colors ${
-              slug && !slugValid
-                ? 'border-red-500 focus:border-red-400'
-                : 'border-subtle focus:border-fg'
-            }`}
-          />
+          <span className="flex-1 border border-l-0 border-subtle bg-bg px-3 py-2.5 text-sm font-mono text-secondary">
+            {slug}
+          </span>
         </div>
-        <p className="text-xs text-secondary">
-          영문 소문자, 숫자, 하이픈만 사용 가능. QR 코드 URL에 쓰입니다.
-          {slug && !slugValid && (
-            <span className="text-red-400 ml-2">올바르지 않은 형식입니다.</span>
-          )}
-        </p>
+        <p className="text-xs text-muted">슬러그는 수정할 수 없습니다. QR URL이 변경됩니다.</p>
       </div>
 
       {/* 설명 */}
@@ -159,7 +147,7 @@ export function CreateExhibitionForm() {
           id="description"
           name="description"
           rows={3}
-          placeholder="전시에 대한 간단한 설명을 입력하세요."
+          defaultValue={initialDescription ?? ''}
           className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg placeholder:text-muted focus:border-fg focus:outline-none transition-colors resize-none"
         />
       </div>
@@ -177,6 +165,7 @@ export function CreateExhibitionForm() {
             id="starts_at"
             name="starts_at"
             type="date"
+            defaultValue={startsAt}
             className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors"
           />
         </div>
@@ -191,36 +180,78 @@ export function CreateExhibitionForm() {
             id="ends_at"
             name="ends_at"
             type="date"
+            defaultValue={endsAt}
             className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors"
           />
         </div>
+      </div>
+
+      {/* 상태 */}
+      <div className="space-y-1.5">
+        <label
+          htmlFor="status"
+          className="block text-xs font-medium uppercase tracking-widest text-secondary"
+        >
+          상태
+        </label>
+        <select
+          id="status"
+          name="status"
+          defaultValue={initialStatus}
+          className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors"
+        >
+          {STATUS_OPTIONS.map(({ value, label }) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
       </div>
 
       {/* 커버 이미지 */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium uppercase tracking-widest text-secondary">
-            커버 이미지 <span className="text-muted">(선택, 최대 {MAX_COVERS}장)</span>
+            커버 이미지 <span className="text-muted">(최대 {MAX_COVERS}장)</span>
           </span>
-          {coverFiles.length > 0 && (
-            <span className="text-xs text-secondary">{coverFiles.length}/{MAX_COVERS}</span>
+          {totalCovers > 0 && (
+            <span className="text-xs text-secondary">{totalCovers}/{MAX_COVERS}</span>
           )}
         </div>
 
-        {coverPreviews.length > 0 && (
+        {(existingCovers.length > 0 || newPreviews.length > 0) && (
           <div className="grid grid-cols-3 gap-2">
-            {coverPreviews.map((url, i) => (
-              <div key={i} className="relative aspect-square bg-bg">
+            {existingCovers.map((cover) => (
+              <div key={cover.path} className="relative aspect-square bg-bg">
                 <Image
-                  src={url}
-                  alt={`커버 ${i + 1}`}
+                  src={cover.url}
+                  alt="커버"
                   fill
                   sizes="(max-width: 512px) 33vw, 160px"
                   className="object-cover"
                 />
                 <button
                   type="button"
-                  onClick={() => removeCover(i)}
+                  onClick={() => removeExisting(cover.path)}
+                  className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center bg-bg/70 text-fg text-xs hover:bg-bg transition-colors"
+                  aria-label="제거"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            {newPreviews.map((url, i) => (
+              <div key={`new-${i}`} className="relative aspect-square bg-bg">
+                <Image
+                  src={url}
+                  alt={`새 커버 ${i + 1}`}
+                  fill
+                  sizes="(max-width: 512px) 33vw, 160px"
+                  className="object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeNew(i)}
                   className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center bg-bg/70 text-fg text-xs hover:bg-bg transition-colors"
                   aria-label="제거"
                 >
@@ -231,7 +262,7 @@ export function CreateExhibitionForm() {
           </div>
         )}
 
-        {coverFiles.length < MAX_COVERS && (
+        {totalCovers < MAX_COVERS && (
           <>
             <input
               ref={coverPickerRef}
@@ -260,10 +291,10 @@ export function CreateExhibitionForm() {
 
       <button
         type="submit"
-        disabled={isPending || (slug.length > 0 && !slugValid)}
+        disabled={isPending}
         className="w-full bg-fg py-3 text-sm font-medium tracking-wide text-bg transition-colors hover:bg-gray6 disabled:opacity-40"
       >
-        {isPending ? '생성 중…' : '전시 생성하기'}
+        {isPending ? '저장 중…' : '저장하기'}
       </button>
     </form>
   )
