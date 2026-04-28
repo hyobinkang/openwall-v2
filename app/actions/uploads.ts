@@ -69,13 +69,26 @@ export async function submitUpload(
   if (updateId) {
     const admin = createAdminClient()
     const updateFields = { guest_name: guestName, type: type as 'photo' | 'text', storage_path: storagePath, text_content: textContent }
+
+    console.log('[submitUpload] UPDATE 시도 — uploadId:', updateId, '| user.id:', user?.id ?? null, '| guestName:', guestName)
+
     const base = admin.from('uploads').update(updateFields).eq('id', updateId)
-    const { error: dbError } = await (user ? base.eq('uploader_id', user.id) : base)
+    const { error: dbError, count } = await (user ? base.eq('uploader_id', user.id) : base).select('id', { count: 'exact', head: true })
+
+    console.log('[submitUpload] UPDATE 결과 — count:', count, '| error:', dbError?.message ?? null)
 
     if (dbError) {
       if (hasNewPhoto && storagePath) await supabase.storage.from('uploads').remove([storagePath])
       return { error: '수정에 실패했습니다. 다시 시도해 주세요.' }
     }
+
+    // DB에 실제로 반영됐는지 확인
+    const { data: verified } = await admin
+      .from('uploads')
+      .select('id, guest_name, uploader_id')
+      .eq('id', updateId)
+      .single()
+    console.log('[submitUpload] UPDATE 후 DB 재조회 — row:', verified)
 
     const photoPublicUrl = storagePath
       ? supabase.storage.from('uploads').getPublicUrl(storagePath).data.publicUrl
