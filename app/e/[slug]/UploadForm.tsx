@@ -139,8 +139,8 @@ export function UploadForm({
   slug: string
 }) {
   const boundAction = useMemo(
-    () => submitUpload.bind(null, exhibitionId),
-    [exhibitionId]
+    () => submitUpload.bind(null, exhibitionId, slug),
+    [exhibitionId, slug]
   )
   const [state, formAction, pending] = useActionState<UploadState, FormData>(
     boundAction,

@@ -1,6 +1,7 @@
 'use server'
 
 import { randomUUID } from 'crypto'
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -20,6 +21,7 @@ const MAX_BYTES = 10 * 1024 * 1024
 
 export async function submitUpload(
   exhibitionId: string,
+  slug: string,
   _: UploadState,
   formData: FormData
 ): Promise<UploadState> {
@@ -79,6 +81,9 @@ export async function submitUpload(
       ? supabase.storage.from('uploads').getPublicUrl(storagePath).data.publicUrl
       : null
 
+    revalidatePath('/my')
+    revalidatePath(`/e/${slug}/gallery`)
+
     return { success: true, isLoggedIn: !!user, uploadId: updateId, nonce, storagePath, textContent, guestName, photoPublicUrl }
   }
 
@@ -104,6 +109,9 @@ export async function submitUpload(
   const photoPublicUrl = storagePath
     ? supabase.storage.from('uploads').getPublicUrl(storagePath).data.publicUrl
     : null
+
+  revalidatePath('/my')
+  revalidatePath(`/e/${slug}/gallery`)
 
   return { success: true, isLoggedIn: !!user, uploadId, nonce, storagePath, textContent, guestName, photoPublicUrl }
 }
