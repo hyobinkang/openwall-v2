@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { logout } from '@/app/actions/auth'
 import { ClaimUploads } from './ClaimUploads'
 import { ProfileSection } from './ProfileSection'
 import { MyPageTabs, type HostedExhibition, type ParticipatedGroup, type UploadItem } from './MyPageTabs'
@@ -93,7 +94,14 @@ export default async function MyPage() {
 
       <header className="border-b border-subtle px-5 py-4 flex items-center justify-between">
         <Link href="/" className="text-base font-bold tracking-tight text-fg">Openwall</Link>
-        <span className="text-sm text-secondary">내 페이지</span>
+        <form action={logout}>
+          <button
+            type="submit"
+            className="text-sm text-secondary hover:text-fg transition-colors"
+          >
+            로그아웃
+          </button>
+        </form>
       </header>
 
       <main className="max-w-2xl mx-auto px-5 py-10">
