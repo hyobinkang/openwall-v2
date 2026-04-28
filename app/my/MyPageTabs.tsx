@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { UploadModal, type ModalUploadItem } from '@/app/components/UploadModal'
 
 export type HostedExhibition = {
   id: string
@@ -50,6 +51,8 @@ export function MyPageTabs({
   participated: ParticipatedGroup[]
 }) {
   const [tab, setTab] = useState<'hosted' | 'participated'>('hosted')
+  const [selected, setSelected] = useState<ModalUploadItem | null>(null)
+  const closeModal = useCallback(() => setSelected(null), [])
 
   return (
     <div>
@@ -127,7 +130,12 @@ export function MyPageTabs({
                   {group.items.map((u) => {
                     if (u.type === 'text') {
                       return (
-                        <div key={u.id} className="border border-subtle bg-surface px-4 py-3">
+                        <button
+                          key={u.id}
+                          type="button"
+                          onClick={() => setSelected(u)}
+                          className="w-full text-left border border-subtle bg-surface px-4 py-3 hover:border-fg transition-colors"
+                        >
                           {u.textContent && (
                             <p className="text-sm text-fg leading-relaxed line-clamp-3 break-words">
                               {u.textContent}
@@ -136,12 +144,17 @@ export function MyPageTabs({
                           <p className="text-xs text-secondary mt-1.5">
                             {u.displayName} · {u.createdAt}
                           </p>
-                        </div>
+                        </button>
                       )
                     }
 
                     return (
-                      <div key={u.id} className="border border-subtle bg-surface flex gap-4 p-3">
+                      <button
+                        key={u.id}
+                        type="button"
+                        onClick={() => setSelected(u)}
+                        className="w-full text-left border border-subtle bg-surface flex gap-4 p-3 hover:border-fg transition-colors"
+                      >
                         {u.publicUrl && (
                           <div className="relative w-20 h-20 flex-shrink-0 bg-bg">
                             <Image
@@ -163,7 +176,7 @@ export function MyPageTabs({
                             {u.displayName} · {u.createdAt}
                           </p>
                         </div>
-                      </div>
+                      </button>
                     )
                   })}
                 </div>
@@ -172,6 +185,8 @@ export function MyPageTabs({
           </div>
         )
       )}
+
+      {selected && <UploadModal item={selected} onClose={closeModal} />}
     </div>
   )
 }

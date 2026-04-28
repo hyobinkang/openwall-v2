@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { UploadsGrid, type UploadItem } from '@/app/dashboard/exhibitions/[id]/uploads/UploadsGrid'
+import { MyUploadsSection, type MyUploadCardItem } from './MyUploadsSection'
 
 function toKST(iso: string) {
   return new Date(iso).toLocaleString('ko-KR', {
@@ -86,6 +86,15 @@ export default async function ExhibitionGalleryPage({
     return data.publicUrl
   }
 
+  const myCardItems: MyUploadCardItem[] = myUploads.map((u) => ({
+    id: u.id,
+    type: u.type as 'photo' | 'text',
+    publicUrl: u.type === 'photo' ? getPublicUrl(u.storage_path) : null,
+    textContent: u.text_content,
+    displayName: myDisplayName(u),
+    createdAt: toKST(u.created_at),
+  }))
+
   return (
     <div className="min-h-screen bg-bg">
       <header className="border-b border-subtle px-6 py-4 flex items-center justify-between">
@@ -110,57 +119,10 @@ export default async function ExhibitionGalleryPage({
         </div>
 
         {/* 내가 남긴 기록 */}
-        {myUploads.length > 0 && (
+        {myCardItems.length > 0 && (
           <section className="mb-10">
             <h2 className="text-sm font-semibold mb-3">내가 남긴 기록</h2>
-            <div className="space-y-2">
-              {myUploads.map((u) => {
-                const url = u.type === 'photo' ? getPublicUrl(u.storage_path) : null
-
-                // 텍스트 전용 카드
-                if (u.type === 'text') {
-                  return (
-                    <div key={u.id} className="border border-subtle bg-surface px-4 py-3">
-                      {u.text_content && (
-                        <p className="text-sm text-fg leading-relaxed line-clamp-3 break-words">
-                          {u.text_content}
-                        </p>
-                      )}
-                      <p className="mt-1.5 text-xs text-secondary">
-                        {myDisplayName(u)} · {toKST(u.created_at)}
-                      </p>
-                    </div>
-                  )
-                }
-
-                // 사진 카드
-                return (
-                  <div key={u.id} className="border border-subtle bg-surface flex gap-4 p-3">
-                    {url && (
-                      <div className="relative w-16 h-16 flex-shrink-0 bg-bg">
-                        <Image
-                          src={url}
-                          alt="업로드 사진"
-                          fill
-                          sizes="64px"
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0 flex flex-col justify-between">
-                      {u.text_content && (
-                        <p className="text-sm text-fg leading-relaxed line-clamp-2 break-words">
-                          {u.text_content}
-                        </p>
-                      )}
-                      <p className="text-xs text-secondary mt-1">
-                        {myDisplayName(u)} · {toKST(u.created_at)}
-                      </p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+            <MyUploadsSection items={myCardItems} />
           </section>
         )}
 
