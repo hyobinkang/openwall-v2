@@ -96,7 +96,7 @@ export async function claimUploads(uploadIds: string[]): Promise<void> {
   const admin = createAdminClient()
   const { data, error, count } = await admin
     .from('uploads')
-    .update({ uploader_id: user.id, guest_name: null })
+    .update({ uploader_id: user.id })
     .in('id', uploadIds)
     .is('uploader_id', null)
     .select()

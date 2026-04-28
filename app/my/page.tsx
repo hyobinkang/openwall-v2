@@ -34,6 +34,8 @@ export default async function MyPage() {
 
   const myProfileName = profile?.name ?? user.email?.split('@')[0] ?? null
 
+  console.log('[my/page] uploads guest_name values:', (uploads ?? []).map((u) => ({ id: u.id, guest_name: u.guest_name })))
+
   function displayName(upload: { guest_name: string | null }): string {
     if (upload.guest_name !== null) return upload.guest_name || '익명'
     return myProfileName || '익명'
