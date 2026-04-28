@@ -273,9 +273,27 @@ export function UploadForm({
 
       {/* 사진 업로드 */}
       <div className="space-y-1.5">
-        <label className="block text-xs font-medium uppercase tracking-widest text-secondary">
+        <label
+          htmlFor="photo-file-input"
+          className="block text-xs font-medium uppercase tracking-widest text-secondary"
+        >
           사진 <span className="text-muted">(선택)</span>
         </label>
+
+        {/*
+          파일 입력을 항상 DOM에 유지. preview가 보일 때 조건부로 숨기면
+          form submit 시 파일 데이터가 formData에 포함되지 않아 서버에서 누락됨.
+        */}
+        <input
+          ref={fileInputRef}
+          id="photo-file-input"
+          type="file"
+          name="photo"
+          accept="image/*"
+          className="sr-only"
+          onChange={handleFileChange}
+        />
+
         {preview ? (
           <div className="relative">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -293,15 +311,10 @@ export function UploadForm({
             </button>
           </div>
         ) : (
-          <label className="block cursor-pointer group">
-            <input
-              ref={fileInputRef}
-              type="file"
-              name="photo"
-              accept="image/*"
-              className="sr-only"
-              onChange={handleFileChange}
-            />
+          <label
+            htmlFor="photo-file-input"
+            className="block cursor-pointer group"
+          >
             <div className="border-2 border-dashed border-subtle group-hover:border-fg transition-colors flex flex-col items-center justify-center py-10 gap-2">
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted group-hover:text-secondary transition-colors" aria-hidden>
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
