@@ -83,8 +83,16 @@ export function CreateExhibitionForm() {
     e.target.value = ''
     if (!files.length) return
 
-    const remaining = MAX_COVERS - covers.length
-    const toAdd = files.slice(0, remaining)
+    if (covers.length + files.length > MAX_COVERS) {
+      const canAdd = MAX_COVERS - covers.length
+      setError(
+        `최대 ${MAX_COVERS}장까지 업로드할 수 있습니다. 현재 ${covers.length}장 선택됨, ${canAdd}장만 추가 가능합니다.`
+      )
+      return
+    }
+
+    setError(null)
+    const toAdd = files
 
     const newItems: CoverItem[] = toAdd.map((f) => ({
       id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,

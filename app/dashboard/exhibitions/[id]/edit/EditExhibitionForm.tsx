@@ -4,7 +4,7 @@ import { useTransition, useRef, useState } from 'react'
 import Image from 'next/image'
 import { updateExhibition } from '@/app/actions/exhibitions'
 
-const MAX_COVERS = 10
+const MAX_COVERS = 9
 const MAX_COVER_MB = 10
 
 const STATUS_OPTIONS = [
@@ -45,25 +45,27 @@ export function EditExhibitionForm({
   const totalCovers = existingCovers.length + newFiles.length
 
   function handleCoverPick(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? [])
+    const files = Array.from(e.target.files ?? []).filter((f) => f.type.startsWith('image/'))
     e.target.value = ''
+    if (!files.length) return
 
-    const remaining = MAX_COVERS - totalCovers
-    if (remaining <= 0) return
-
-    const valid: File[] = []
-    const previews: string[] = []
-    for (const f of files.slice(0, remaining)) {
-      if (!f.type.startsWith('image/')) continue
-      if (f.size > MAX_COVER_MB * 1024 * 1024) {
-        setError(`파일 크기는 ${MAX_COVER_MB}MB 이하여야 합니다.`)
-        continue
-      }
-      valid.push(f)
-      previews.push(URL.createObjectURL(f))
+    if (totalCovers + files.length > MAX_COVERS) {
+      const canAdd = MAX_COVERS - totalCovers
+      setError(
+        `최대 ${MAX_COVERS}장까지 업로드할 수 있습니다. 현재 ${totalCovers}장 선택됨, ${canAdd}장만 추가 가능합니다.`
+      )
+      return
     }
-    setNewFiles((prev) => [...prev, ...valid])
-    setNewPreviews((prev) => [...prev, ...previews])
+
+    const oversized = files.find((f) => f.size > MAX_COVER_MB * 1024 * 1024)
+    if (oversized) {
+      setError(`파일 크기는 ${MAX_COVER_MB}MB 이하여야 합니다.`)
+      return
+    }
+
+    setError(null)
+    setNewFiles((prev) => [...prev, ...files])
+    setNewPreviews((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))])
   }
 
   function removeExisting(path: string) {
