@@ -6,33 +6,6 @@ import { isRedirectError } from 'next/dist/client/components/redirect-error'
 
 export type ExhibitionState = { error?: string }
 
-const MAX_COVER_MB = 10
-
-async function uploadCoverFiles(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  files: File[]
-): Promise<string[]> {
-  const paths: string[] = []
-  for (const file of files) {
-    if (!(file instanceof File) || file.size === 0) continue
-    if (!file.type.startsWith('image/')) continue
-    if (file.size > MAX_COVER_MB * 1024 * 1024) continue
-    const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
-    const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-    console.log('[uploadCoverFiles] uploading:', { path, type: file.type, size: file.size })
-    const bytes = await file.arrayBuffer()
-    const { error } = await supabase.storage
-      .from('covers')
-      .upload(path, bytes, { contentType: file.type })
-    if (error) {
-      console.error('[uploadCoverFiles] storage upload error:', error)
-    } else {
-      paths.push(path)
-    }
-  }
-  return paths
-}
 
 export async function createExhibition(
   formData: FormData
@@ -116,9 +89,8 @@ export async function updateExhibition(
       if (removeErr) console.error('[updateExhibition] storage remove error:', removeErr)
     }
 
-    const coverFiles = formData.getAll('covers') as File[]
-    console.log('[updateExhibition] coverFiles:', coverFiles.map((f) => ({ name: f.name, size: f.size, type: f.type })))
-    const newPaths = await uploadCoverFiles(supabase, user.id, coverFiles)
+    const newPaths = formData.getAll('new_cover_path') as string[]
+    console.log('[updateExhibition] newPaths:', newPaths)
 
     const currentPaths = (ex.cover_images as string[] | null) ?? []
     const finalPaths = [
