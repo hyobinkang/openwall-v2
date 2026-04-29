@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { UploadModal, type ModalUploadItem } from '@/app/components/UploadModal'
+import { DeleteUploadButton } from '@/app/components/DeleteUploadButton'
 
 export type HostedExhibition = {
   id: string
@@ -52,7 +53,21 @@ export function MyPageTabs({
 }) {
   const [tab, setTab] = useState<'hosted' | 'participated'>('hosted')
   const [selected, setSelected] = useState<ModalUploadItem | null>(null)
+  const [groups, setGroups] = useState(participated)
   const closeModal = useCallback(() => setSelected(null), [])
+
+  function handleDelete(exhibitionId: string, uploadId: string) {
+    setSelected(null)
+    setGroups((prev) =>
+      prev
+        .map((g) =>
+          g.exhibitionId === exhibitionId
+            ? { ...g, items: g.items.filter((item) => item.id !== uploadId) }
+            : g
+        )
+        .filter((g) => g.items.length > 0)
+    )
+  }
 
   return (
     <div>
@@ -116,7 +131,7 @@ export function MyPageTabs({
 
       {/* 참여한 전시 */}
       {tab === 'participated' && (
-        participated.length === 0 ? (
+        groups.length === 0 ? (
           <div className="py-16 text-center">
             <p className="text-sm text-secondary">아직 참여한 전시가 없습니다.</p>
             <p className="mt-1 text-xs text-secondary">
@@ -125,7 +140,7 @@ export function MyPageTabs({
           </div>
         ) : (
           <div className="space-y-12">
-            {participated.map((group) => (
+            {groups.map((group) => (
               <section key={group.exhibitionId}>
                 <div className="flex items-baseline justify-between mb-4">
                   <h2 className="text-sm font-semibold text-fg">{group.title}</h2>
@@ -141,53 +156,67 @@ export function MyPageTabs({
                   {group.items.map((u) => {
                     if (u.type === 'text') {
                       return (
-                        <button
-                          key={u.id}
-                          type="button"
-                          onClick={() => setSelected(u)}
-                          className="w-full text-left border border-subtle bg-surface px-4 py-3 hover:border-fg transition-colors"
-                        >
-                          {u.textContent && (
-                            <p className="text-sm text-fg leading-relaxed line-clamp-3 break-words">
-                              {u.textContent}
+                        <div key={u.id} className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setSelected(u)}
+                            className="w-full text-left border border-subtle bg-surface px-4 py-3 hover:border-fg transition-colors"
+                          >
+                            {u.textContent && (
+                              <p className="text-sm text-fg leading-relaxed line-clamp-3 break-words">
+                                {u.textContent}
+                              </p>
+                            )}
+                            <p className="text-xs text-secondary mt-1.5">
+                              {u.displayName} · {u.createdAt}
                             </p>
-                          )}
-                          <p className="text-xs text-secondary mt-1.5">
-                            {u.displayName} · {u.createdAt}
-                          </p>
-                        </button>
+                          </button>
+                          <div className="absolute top-2 right-2 bg-surface/80 px-1.5 py-0.5">
+                            <DeleteUploadButton
+                              uploadId={u.id}
+                              onDeleted={() => handleDelete(group.exhibitionId, u.id)}
+                            />
+                          </div>
+                        </div>
                       )
                     }
 
                     return (
-                      <button
-                        key={u.id}
-                        type="button"
-                        onClick={() => setSelected(u)}
-                        className="w-full text-left border border-subtle bg-surface flex gap-4 p-3 hover:border-fg transition-colors"
-                      >
-                        {u.publicUrl && (
-                          <div className="relative w-20 h-20 flex-shrink-0 bg-bg">
-                            <Image
-                              src={u.publicUrl}
-                              alt="업로드 사진"
-                              fill
-                              sizes="80px"
-                              className="object-cover"
-                            />
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0 flex flex-col justify-between">
-                          {u.textContent && (
-                            <p className="text-sm text-fg leading-relaxed line-clamp-2 break-words">
-                              {u.textContent}
-                            </p>
+                      <div key={u.id} className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setSelected(u)}
+                          className="w-full text-left border border-subtle bg-surface flex gap-4 p-3 hover:border-fg transition-colors"
+                        >
+                          {u.publicUrl && (
+                            <div className="relative w-20 h-20 flex-shrink-0 bg-bg">
+                              <Image
+                                src={u.publicUrl}
+                                alt="업로드 사진"
+                                fill
+                                sizes="80px"
+                                className="object-cover"
+                              />
+                            </div>
                           )}
-                          <p className="text-xs text-secondary mt-1">
-                            {u.displayName} · {u.createdAt}
-                          </p>
+                          <div className="flex-1 min-w-0 flex flex-col justify-between">
+                            {u.textContent && (
+                              <p className="text-sm text-fg leading-relaxed line-clamp-2 break-words">
+                                {u.textContent}
+                              </p>
+                            )}
+                            <p className="text-xs text-secondary mt-1">
+                              {u.displayName} · {u.createdAt}
+                            </p>
+                          </div>
+                        </button>
+                        <div className="absolute top-2 right-2 bg-surface/80 px-1.5 py-0.5">
+                          <DeleteUploadButton
+                            uploadId={u.id}
+                            onDeleted={() => handleDelete(group.exhibitionId, u.id)}
+                          />
                         </div>
-                      </button>
+                      </div>
                     )
                   })}
                 </div>

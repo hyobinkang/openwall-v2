@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
+import { DeleteUploadButton } from '@/app/components/DeleteUploadButton'
 
 export type UploadItem = {
   id: string
@@ -10,7 +11,7 @@ export type UploadItem = {
   text_content: string | null
   caption: string | null
   uploaderLabel: string
-  createdAt: string // KST 포맷된 문자열
+  createdAt: string
 }
 
 // ─── 모달 ──────────────────────────────────────────────────
@@ -32,7 +33,6 @@ function Modal({ item, onClose }: { item: UploadItem; onClose: () => void }) {
         className="bg-surface w-full max-w-lg max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 닫기 버튼 */}
         <div className="flex justify-end px-4 pt-4">
           <button
             onClick={onClose}
@@ -44,7 +44,6 @@ function Modal({ item, onClose }: { item: UploadItem; onClose: () => void }) {
         </div>
 
         <div className="px-6 pb-6 space-y-4">
-          {/* 사진 */}
           {item.type === 'photo' && item.publicUrl && (
             <div className="relative w-full aspect-[4/3]">
               <Image
@@ -57,21 +56,18 @@ function Modal({ item, onClose }: { item: UploadItem; onClose: () => void }) {
             </div>
           )}
 
-          {/* 텍스트 */}
           {item.text_content && (
             <p className="text-sm text-fg leading-relaxed whitespace-pre-wrap break-words">
               {item.text_content}
             </p>
           )}
 
-          {/* 캡션 */}
           {item.caption && (
             <p className="text-xs text-secondary italic border-t border-subtle pt-3">
               {item.caption}
             </p>
           )}
 
-          {/* 메타 */}
           <p className="text-xs text-secondary border-t border-subtle pt-3">
             {item.uploaderLabel} · {item.createdAt}
           </p>
@@ -85,61 +81,79 @@ function Modal({ item, onClose }: { item: UploadItem; onClose: () => void }) {
 function UploadCard({
   item,
   onClick,
+  onDelete,
 }: {
   item: UploadItem
   onClick: () => void
+  onDelete?: () => void
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="text-left bg-surface border border-subtle hover:border-fg transition-colors w-full overflow-hidden"
-    >
-      {/* 이미지 섹션 */}
-      {item.type === 'photo' && item.publicUrl && (
-        <div className="relative w-full aspect-[4/3] bg-bg">
-          <Image
-            src={item.publicUrl}
-            alt={item.caption ?? '업로드 사진'}
-            fill
-            sizes="(max-width: 768px) 50vw, 33vw"
-            className="object-cover"
-          />
-        </div>
-      )}
+    <div className="relative">
+      <button
+        type="button"
+        onClick={onClick}
+        className="text-left bg-surface border border-subtle hover:border-fg transition-colors w-full overflow-hidden"
+      >
+        {item.type === 'photo' && item.publicUrl && (
+          <div className="relative w-full aspect-[4/3] bg-bg">
+            <Image
+              src={item.publicUrl}
+              alt={item.caption ?? '업로드 사진'}
+              fill
+              sizes="(max-width: 768px) 50vw, 33vw"
+              className="object-cover"
+            />
+          </div>
+        )}
 
-      {/* 텍스트 카드 헤더 (텍스트 전용) */}
-      {item.type === 'text' && (
-        <div className="bg-surface px-4 py-5 min-h-[100px] flex items-start">
-          <p className="text-sm text-fg leading-relaxed line-clamp-3">
-            {item.text_content}
+        {item.type === 'text' && (
+          <div className="bg-surface px-4 py-5 min-h-[100px] flex items-start">
+            <p className="text-sm text-fg leading-relaxed line-clamp-3">
+              {item.text_content}
+            </p>
+          </div>
+        )}
+
+        <div className="px-3 py-2.5 space-y-0.5">
+          {item.type === 'photo' && (item.caption || item.text_content) && (
+            <p className="text-xs text-secondary line-clamp-2">
+              {item.caption ?? item.text_content}
+            </p>
+          )}
+          {item.type === 'text' && item.caption && (
+            <p className="text-xs text-secondary italic line-clamp-1">{item.caption}</p>
+          )}
+          <p className="text-xs text-secondary">
+            {item.uploaderLabel} · {item.createdAt}
           </p>
         </div>
-      )}
+      </button>
 
-      {/* 하단 정보 */}
-      <div className="px-3 py-2.5 space-y-0.5">
-        {/* 캡션 또는 텍스트 미리보기 */}
-        {item.type === 'photo' && (item.caption || item.text_content) && (
-          <p className="text-xs text-secondary line-clamp-2">
-            {item.caption ?? item.text_content}
-          </p>
-        )}
-        {item.type === 'text' && item.caption && (
-          <p className="text-xs text-secondary italic line-clamp-1">{item.caption}</p>
-        )}
-        <p className="text-xs text-secondary">
-          {item.uploaderLabel} · {item.createdAt}
-        </p>
-      </div>
-    </button>
+      {onDelete && (
+        <div className="absolute top-2 right-2 z-10 bg-bg/70 px-1.5 py-0.5">
+          <DeleteUploadButton uploadId={item.id} onDeleted={onDelete} />
+        </div>
+      )}
+    </div>
   )
 }
 
 // ─── 그리드 ────────────────────────────────────────────────
-export function UploadsGrid({ items }: { items: UploadItem[] }) {
+export function UploadsGrid({
+  items: initialItems,
+  showDelete = false,
+}: {
+  items: UploadItem[]
+  showDelete?: boolean
+}) {
+  const [items, setItems] = useState(initialItems)
   const [selected, setSelected] = useState<UploadItem | null>(null)
   const close = useCallback(() => setSelected(null), [])
+
+  function handleDelete(id: string) {
+    setItems((prev) => prev.filter((item) => item.id !== id))
+    setSelected((prev) => (prev?.id === id ? null : prev))
+  }
 
   if (items.length === 0) return null
 
@@ -147,7 +161,12 @@ export function UploadsGrid({ items }: { items: UploadItem[] }) {
     <>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
         {items.map((item) => (
-          <UploadCard key={item.id} item={item} onClick={() => setSelected(item)} />
+          <UploadCard
+            key={item.id}
+            item={item}
+            onClick={() => setSelected(item)}
+            onDelete={showDelete ? () => handleDelete(item.id) : undefined}
+          />
         ))}
       </div>
       {selected && <Modal item={selected} onClose={close} />}
