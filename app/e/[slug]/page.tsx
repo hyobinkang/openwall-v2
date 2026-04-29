@@ -1,8 +1,15 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import { UploadForm } from './UploadForm'
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+
+function coverUrl(path: string) {
+  return `${SUPABASE_URL}/storage/v1/object/public/covers/${path}`
+}
 
 export async function generateMetadata({
   params,
@@ -39,7 +46,7 @@ export default async function ExhibitionVisitorPage({
 
   const { data: exhibition } = await supabase
     .from('exhibitions')
-    .select('id, title, description, status, starts_at, ends_at')
+    .select('id, title, description, status, starts_at, ends_at, cover_images')
     .eq('slug', slug)
     .single()
 
@@ -74,6 +81,23 @@ export default async function ExhibitionVisitorPage({
           </Link>
         )}
       </header>
+
+      {/* 커버 이미지 슬라이드 */}
+      {exhibition.cover_images && exhibition.cover_images.length > 0 && (
+        <div className="overflow-x-auto flex gap-2 px-6 py-4" style={{ scrollbarWidth: 'none' }}>
+          {exhibition.cover_images.map((path) => (
+            <div key={path} className="relative shrink-0 h-[200px] w-auto aspect-[3/2] overflow-hidden bg-bg">
+              <Image
+                src={coverUrl(path)}
+                alt="커버"
+                fill
+                sizes="300px"
+                className="object-cover"
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       <main className="max-w-lg mx-auto px-6 py-12">
         {/* 전시 정보 */}

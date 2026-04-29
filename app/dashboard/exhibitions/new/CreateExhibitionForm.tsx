@@ -6,7 +6,7 @@ import imageCompression from 'browser-image-compression'
 import { createClient } from '@/lib/supabase/client'
 import { createExhibition } from '@/app/actions/exhibitions'
 
-const MAX_COVERS = 10
+const MAX_COVERS = 9
 
 type CoverItem = {
   id: string
