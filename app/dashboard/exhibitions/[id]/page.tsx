@@ -1,9 +1,16 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { QRCodeDisplay } from './QRCodeDisplay'
 import type { Exhibition } from '@/lib/supabase/types'
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+
+function coverUrl(path: string) {
+  return `${SUPABASE_URL}/storage/v1/object/public/covers/${path}`
+}
 
 const STATUS_LABEL: Record<Exhibition['status'], string> = {
   active: '진행 중',
@@ -98,6 +105,31 @@ export default async function ExhibitionDetailPage({
           수정
         </Link>
       </div>
+
+      {/* 커버 이미지 */}
+      {ex.cover_images && ex.cover_images.length > 0 && (
+        <>
+          <hr className="my-8 border-subtle" />
+          <section>
+            <h2 className="text-xs font-medium uppercase tracking-widest text-secondary mb-4">
+              커버 이미지
+            </h2>
+            <div className="grid grid-cols-3 gap-2">
+              {ex.cover_images.map((path) => (
+                <div key={path} className="relative aspect-square bg-bg overflow-hidden">
+                  <Image
+                    src={coverUrl(path)}
+                    alt="커버"
+                    fill
+                    sizes="(max-width: 512px) 33vw, 160px"
+                    className="object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
 
       <hr className="my-8 border-subtle" />
 

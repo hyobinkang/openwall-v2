@@ -38,8 +38,8 @@ async function uploadToStorage(file: File): Promise<string> {
   if (!user) throw new Error('Not authenticated')
 
   const compressed = await imageCompression(file, {
-    maxSizeMB: 2,
-    maxWidthOrHeight: 2048,
+    maxSizeMB: 0.5,
+    maxWidthOrHeight: 1024,
     useWebWorker: true,
   })
 
@@ -271,8 +271,8 @@ export function CreateExhibitionForm() {
                   className="object-cover"
                 />
                 {cover.uploading && (
-                  <div className="absolute inset-0 bg-bg/60 flex items-center justify-center">
-                    <span className="text-xs text-fg">업로드 중…</span>
+                  <div className="absolute top-1 right-1 w-5 h-5">
+                    <div className="w-full h-full rounded-full border-2 border-fg/20 border-t-fg animate-spin" />
                   </div>
                 )}
                 {cover.uploadError && (
