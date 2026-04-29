@@ -82,29 +82,30 @@ export default async function ExhibitionVisitorPage({
         )}
       </header>
 
-      {/* 커버 이미지 슬라이드 */}
-      {exhibition.cover_images && exhibition.cover_images.length > 0 && (
-        <div className="overflow-x-auto flex gap-2 px-6 py-4" style={{ scrollbarWidth: 'none' }}>
-          {exhibition.cover_images.map((path) => (
-            <div key={path} className="relative shrink-0 h-[200px] w-auto aspect-[3/2] overflow-hidden bg-bg">
-              <Image
-                src={coverUrl(path)}
-                alt="커버"
-                fill
-                sizes="300px"
-                className="object-cover"
-              />
-            </div>
-          ))}
-        </div>
-      )}
-
       <main className="max-w-lg mx-auto px-6 py-12">
         {/* 전시 정보 */}
         <div className="mb-10">
           <h1 className="text-2xl font-bold tracking-tight">{exhibition.title}</h1>
+
+          {/* 커버 이미지 슬라이드 */}
+          {exhibition.cover_images && exhibition.cover_images.length > 0 && (
+            <div className="overflow-x-auto flex gap-2 mt-4" style={{ scrollbarWidth: 'none' }}>
+              {exhibition.cover_images.map((path) => (
+                <div key={path} className="relative shrink-0 h-[200px] aspect-[3/2] overflow-hidden bg-black">
+                  <Image
+                    src={coverUrl(path)}
+                    alt="커버"
+                    fill
+                    sizes="300px"
+                    className="object-contain"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+
           {exhibition.description && (
-            <p className="mt-2 text-sm text-secondary leading-relaxed">
+            <p className="mt-4 text-sm text-secondary leading-relaxed">
               {exhibition.description}
             </p>
           )}
