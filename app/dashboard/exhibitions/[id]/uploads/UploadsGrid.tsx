@@ -92,10 +92,10 @@ function UploadCard({
       <button
         type="button"
         onClick={onClick}
-        className="text-left bg-surface border border-subtle hover:border-fg transition-colors w-full overflow-hidden"
+        className="text-left bg-surface border border-subtle hover:border-fg transition-colors w-full aspect-square overflow-hidden flex flex-col"
       >
         {item.type === 'photo' && item.publicUrl && (
-          <div className="relative w-full aspect-[4/3] bg-bg">
+          <div className="relative flex-1 bg-bg">
             <Image
               src={item.publicUrl}
               alt={item.caption ?? '업로드 사진'}
@@ -107,16 +107,16 @@ function UploadCard({
         )}
 
         {item.type === 'text' && (
-          <div className="bg-surface px-4 py-5 min-h-[100px] flex items-start">
-            <p className="text-sm text-fg leading-relaxed line-clamp-3">
+          <div className="flex-1 px-4 py-4 overflow-hidden">
+            <p className="text-sm text-fg leading-relaxed line-clamp-4">
               {item.text_content}
             </p>
           </div>
         )}
 
-        <div className="px-3 py-2.5 space-y-0.5">
+        <div className="shrink-0 px-3 py-2 border-t border-subtle space-y-0.5">
           {item.type === 'photo' && (item.caption || item.text_content) && (
-            <p className="text-xs text-secondary line-clamp-2">
+            <p className="text-xs text-secondary line-clamp-1">
               {item.caption ?? item.text_content}
             </p>
           )}
