@@ -84,9 +84,8 @@ export function CreateExhibitionForm() {
     if (!files.length) return
 
     if (covers.length + files.length > MAX_COVERS) {
-      const canAdd = MAX_COVERS - covers.length
       setError(
-        `최대 ${MAX_COVERS}장까지 업로드할 수 있습니다. 현재 ${covers.length}장 선택됨, ${canAdd}장만 추가 가능합니다.`
+        `최대 ${MAX_COVERS}장까지 업로드할 수 있습니다.`
       )
       return
     }
