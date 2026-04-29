@@ -83,18 +83,28 @@ export function EditExhibitionForm({
 
     const fd = new FormData(e.currentTarget)
 
-    // 삭제된 기존 커버 경로 추가
     const keptPaths = new Set(existingCovers.map((c) => c.path))
     for (const { path } of initialCovers) {
       if (!keptPaths.has(path)) fd.append('remove_cover', path)
     }
 
-    // 새 커버 파일 추가
     for (const f of newFiles) fd.append('covers', f)
 
+    console.log('[EditExhibitionForm] submitting', {
+      id: fd.get('id'),
+      title: fd.get('title'),
+      newFiles: newFiles.map((f) => ({ name: f.name, size: f.size, type: f.type })),
+      removePaths: fd.getAll('remove_cover'),
+    })
+
     startTransition(async () => {
-      const result = await updateExhibition(fd)
-      if (result?.error) setError(result.error)
+      try {
+        const result = await updateExhibition(fd)
+        if (result?.error) setError(result.error)
+      } catch (err) {
+        console.error('[EditExhibitionForm] updateExhibition threw:', err)
+        setError('저장 중 오류가 발생했습니다. 다시 시도해 주세요.')
+      }
     })
   }
 

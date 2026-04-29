@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { isRedirectError } from 'next/dist/client/components/redirect-error'
 
 export type ExhibitionState = { error?: string }
 
@@ -83,50 +84,65 @@ export async function createExhibition(
 export async function updateExhibition(
   formData: FormData
 ): Promise<ExhibitionState> {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) redirect('/login')
 
-  const id = (formData.get('id') as string).trim()
-  const title = (formData.get('title') as string).trim()
-  const description = (formData.get('description') as string | null)?.trim() || null
-  const starts_at = (formData.get('starts_at') as string) || null
-  const ends_at = (formData.get('ends_at') as string) || null
-  const status = formData.get('status') as 'draft' | 'active' | 'closed'
+    const id = (formData.get('id') as string).trim()
+    const title = (formData.get('title') as string).trim()
+    const description = (formData.get('description') as string | null)?.trim() || null
+    const starts_at = (formData.get('starts_at') as string) || null
+    const ends_at = (formData.get('ends_at') as string) || null
+    const status = formData.get('status') as 'draft' | 'active' | 'closed'
 
-  if (!title) return { error: '전시 제목을 입력해 주세요.' }
-  if (!['draft', 'active', 'closed'].includes(status)) return { error: '올바르지 않은 상태입니다.' }
+    console.log('[updateExhibition] start', { id, title, status })
 
-  const { data: ex } = await supabase
-    .from('exhibitions')
-    .select('id, cover_images')
-    .eq('id', id)
-    .eq('organizer_id', user.id)
-    .single()
+    if (!title) return { error: '전시 제목을 입력해 주세요.' }
+    if (!['draft', 'active', 'closed'].includes(status)) return { error: '올바르지 않은 상태입니다.' }
 
-  if (!ex) return { error: '전시를 찾을 수 없습니다.' }
+    const { data: ex } = await supabase
+      .from('exhibitions')
+      .select('id, cover_images')
+      .eq('id', id)
+      .eq('organizer_id', user.id)
+      .single()
 
-  const removePaths = formData.getAll('remove_cover') as string[]
-  if (removePaths.length > 0) {
-    await supabase.storage.from('covers').remove(removePaths)
+    if (!ex) return { error: '전시를 찾을 수 없습니다.' }
+
+    const removePaths = formData.getAll('remove_cover') as string[]
+    if (removePaths.length > 0) {
+      const { error: removeErr } = await supabase.storage.from('covers').remove(removePaths)
+      if (removeErr) console.error('[updateExhibition] storage remove error:', removeErr)
+    }
+
+    const coverFiles = formData.getAll('covers') as File[]
+    console.log('[updateExhibition] coverFiles:', coverFiles.map((f) => ({ name: f.name, size: f.size, type: f.type })))
+    const newPaths = await uploadCoverFiles(supabase, user.id, coverFiles)
+
+    const currentPaths = (ex.cover_images as string[] | null) ?? []
+    const finalPaths = [
+      ...currentPaths.filter((p) => !removePaths.includes(p)),
+      ...newPaths,
+    ]
+
+    console.log('[updateExhibition] finalPaths:', finalPaths)
+
+    const { error } = await supabase
+      .from('exhibitions')
+      .update({ title, description, starts_at, ends_at, status, cover_images: finalPaths })
+      .eq('id', id)
+      .eq('organizer_id', user.id)
+
+    if (error) {
+      console.error('[updateExhibition] db update error:', error)
+      return { error: '수정에 실패했습니다. 다시 시도해 주세요.' }
+    }
+
+    redirect(`/dashboard/exhibitions/${id}`)
+  } catch (err: unknown) {
+    if (isRedirectError(err)) throw err
+    console.error('[updateExhibition] unexpected error:', err)
+    return { error: '알 수 없는 오류가 발생했습니다. 다시 시도해 주세요.' }
   }
-
-  const coverFiles = formData.getAll('covers') as File[]
-  const newPaths = await uploadCoverFiles(supabase, user.id, coverFiles)
-
-  const currentPaths = (ex.cover_images as string[] | null) ?? []
-  const finalPaths = [
-    ...currentPaths.filter((p) => !removePaths.includes(p)),
-    ...newPaths,
-  ]
-
-  const { error } = await supabase
-    .from('exhibitions')
-    .update({ title, description, starts_at, ends_at, status, cover_images: finalPaths })
-    .eq('id', id)
-    .eq('organizer_id', user.id)
-
-  if (error) return { error: '수정에 실패했습니다. 다시 시도해 주세요.' }
-
-  redirect(`/dashboard/exhibitions/${id}`)
 }
