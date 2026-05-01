@@ -93,7 +93,7 @@ export default async function MyPage() {
       <ClaimUploads />
 
       <header className="border-b border-subtle py-4">
-        <div className="w-full px-4 flex items-center justify-between">
+        <div className="w-full px-10 flex items-center justify-between">
           <Link href="/" className="text-base font-bold tracking-tight text-fg">Openwall</Link>
           <form action={logout}>
             <button
@@ -106,7 +106,7 @@ export default async function MyPage() {
         </div>
       </header>
 
-      <main className="w-full px-4 py-10">
+      <main className="w-full px-10 py-10">
         <ProfileSection initialName={myProfileName} joinedAt={user.created_at} />
         <MyPageTabs hosted={hosted} participated={participated} />
       </main>
