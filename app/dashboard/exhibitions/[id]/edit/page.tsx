@@ -30,7 +30,7 @@ export default async function EditExhibitionPage({
   }))
 
   return (
-    <div className="max-w-lg">
+    <div className="max-w-xl mx-auto">
       <div className="mb-8">
         <Link
           href={`/dashboard/exhibitions/${id}`}

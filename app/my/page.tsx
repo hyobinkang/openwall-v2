@@ -92,16 +92,18 @@ export default async function MyPage() {
     <div className="min-h-screen bg-bg text-fg">
       <ClaimUploads />
 
-      <header className="border-b border-subtle px-5 py-4 flex items-center justify-between">
-        <Link href="/" className="text-base font-bold tracking-tight text-fg">Openwall</Link>
-        <form action={logout}>
-          <button
-            type="submit"
-            className="text-sm text-secondary hover:text-fg transition-colors"
-          >
-            로그아웃
-          </button>
-        </form>
+      <header className="border-b border-subtle px-5 py-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link href="/" className="text-base font-bold tracking-tight text-fg">Openwall</Link>
+          <form action={logout}>
+            <button
+              type="submit"
+              className="text-sm text-secondary hover:text-fg transition-colors"
+            >
+              로그아웃
+            </button>
+          </form>
+        </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-5 py-10">

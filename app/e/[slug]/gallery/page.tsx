@@ -97,19 +97,21 @@ export default async function ExhibitionGalleryPage({
 
   return (
     <div className="min-h-screen bg-bg">
-      <header className="border-b border-subtle px-6 py-4 flex items-center justify-between">
-        <Link href={`/e/${slug}`} className="text-sm font-bold tracking-tight text-fg">
-          Openwall
-        </Link>
-        {user ? (
-          <Link href="/my" className="text-xs text-secondary hover:text-fg transition-colors">
-            내 페이지
+      <header className="border-b border-subtle px-6 py-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <Link href={`/e/${slug}`} className="text-sm font-bold tracking-tight text-fg">
+            Openwall
           </Link>
-        ) : (
-          <Link href="/login" className="text-xs text-secondary hover:text-fg transition-colors">
-            로그인
-          </Link>
-        )}
+          {user ? (
+            <Link href="/my" className="text-xs text-secondary hover:text-fg transition-colors">
+              내 페이지
+            </Link>
+          ) : (
+            <Link href="/login" className="text-xs text-secondary hover:text-fg transition-colors">
+              로그인
+            </Link>
+          )}
+        </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-5 py-10">

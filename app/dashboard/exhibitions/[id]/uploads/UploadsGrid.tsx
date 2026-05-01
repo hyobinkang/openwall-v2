@@ -104,7 +104,7 @@ function UploadCard({
               src={item.publicUrl}
               alt={item.caption ?? '업로드 사진'}
               fill
-              sizes="(max-width: 768px) 50vw, 33vw"
+              sizes="(max-width: 768px) 33vw, 17vw"
               className="object-cover"
             />
           </div>
@@ -231,7 +231,7 @@ export function UploadsGrid({
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
         {items.map((item) => (
           <UploadCard
             key={item.id}
