@@ -231,7 +231,7 @@ export function UploadsGrid({
         </div>
       )}
 
-      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
         {items.map((item) => (
           <UploadCard
             key={item.id}
