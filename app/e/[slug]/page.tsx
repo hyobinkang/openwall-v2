@@ -67,8 +67,8 @@ export default async function ExhibitionVisitorPage({
   return (
     <div className="min-h-screen bg-bg">
       {/* 헤더 */}
-      <header className="border-b border-subtle px-6 py-4">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
+      <header className="border-b border-subtle py-4">
+        <div className="w-full px-4 flex items-center justify-between">
           <Link href={user ? '/my' : '/'} className="text-sm font-bold tracking-tight text-fg">
             Openwall
           </Link>
@@ -84,7 +84,7 @@ export default async function ExhibitionVisitorPage({
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-6 py-12">
+      <main className="w-full px-4 py-12">
         {/* 전시 정보 */}
         <div className="mb-10">
           <h1 className="text-2xl font-bold tracking-tight">{exhibition.title}</h1>

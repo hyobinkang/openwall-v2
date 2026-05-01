@@ -29,6 +29,10 @@
   --color-gray6: var(--colors-gray6);
 }
 
+html, body {
+  width: 100% !important;
+}
+
 body {
   background: var(--colors-background);
   color: var(--colors-foreground);
