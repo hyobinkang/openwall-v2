@@ -31,7 +31,7 @@ export function DeleteExhibitionButton({
   }
 
   return (
-    <div className="flex flex-col items-end gap-1 shrink-0">
+    <div className="relative shrink-0">
       <button
         type="button"
         onClick={handleClick}
@@ -41,7 +41,7 @@ export function DeleteExhibitionButton({
         {isPending ? '삭제 중…' : '삭제'}
       </button>
       {showError && (
-        <p className="text-xs text-red-400 whitespace-nowrap">
+        <p className="absolute top-full right-0 mt-1 text-xs text-red-400 whitespace-nowrap">
           관람객 기록이 있는 전시는 삭제할 수 없습니다.
         </p>
       )}
