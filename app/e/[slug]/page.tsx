@@ -82,7 +82,7 @@ export default async function ExhibitionVisitorPage({
         )}
       </header>
 
-      <main className="max-w-lg mx-auto px-6 py-12">
+      <main className="max-w-2xl mx-auto px-6 py-12">
         {/* 전시 정보 */}
         <div className="mb-10">
           <h1 className="text-2xl font-bold tracking-tight">{exhibition.title}</h1>

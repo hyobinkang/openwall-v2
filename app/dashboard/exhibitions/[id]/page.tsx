@@ -67,7 +67,7 @@ export default async function ExhibitionDetailPage({
   const exhibitionUrl = `${proto}://${host}/e/${ex.slug}`
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-4xl">
       {/* 뒤로가기 */}
       <Link
         href="/my"

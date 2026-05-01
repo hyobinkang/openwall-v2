@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: '새 전시 만들기 — Openwall' }
 
 export default function NewExhibitionPage() {
   return (
-    <div className="max-w-lg">
+    <div className="max-w-xl">
       <div className="mb-8">
         <Link
           href="/my"

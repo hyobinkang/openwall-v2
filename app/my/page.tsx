@@ -104,7 +104,7 @@ export default async function MyPage() {
         </form>
       </header>
 
-      <main className="max-w-2xl mx-auto px-5 py-10">
+      <main className="max-w-6xl mx-auto px-5 py-10">
         <ProfileSection initialName={myProfileName} joinedAt={user.created_at} />
         <MyPageTabs hosted={hosted} participated={participated} />
       </main>

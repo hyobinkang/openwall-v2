@@ -112,7 +112,7 @@ export default async function ExhibitionGalleryPage({
         )}
       </header>
 
-      <main className="max-w-3xl mx-auto px-5 py-10">
+      <main className="max-w-6xl mx-auto px-5 py-10">
         <div className="mb-6">
           <h1 className="text-xl font-bold tracking-tight">{exhibition.title}</h1>
           <p className="mt-1 text-sm text-secondary">업로드 {allItems.length}개</p>
