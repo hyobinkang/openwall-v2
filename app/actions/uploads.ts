@@ -129,6 +129,58 @@ export async function submitUpload(
   return { success: true, isLoggedIn: !!user, uploadId, nonce, storagePath, textContent, guestName, photoPublicUrl }
 }
 
+export async function deleteUploads(uploadIds: string[]): Promise<{ error?: string }> {
+  if (!uploadIds.length) return {}
+
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: '로그인이 필요합니다.' }
+
+  const { data: uploads } = await supabase
+    .from('uploads')
+    .select('id, uploader_id, storage_path, exhibition_id')
+    .in('id', uploadIds)
+  if (!uploads?.length) return {}
+
+  const exhibitionIds = [...new Set(uploads.map((u) => u.exhibition_id))]
+  const { data: exhibitions } = await supabase
+    .from('exhibitions')
+    .select('id, slug, organizer_id')
+    .in('id', exhibitionIds)
+  const exMap = new Map(exhibitions?.map((e) => [e.id, e]) ?? [])
+
+  for (const upload of uploads) {
+    const ex = exMap.get(upload.exhibition_id)
+    if (upload.uploader_id !== user.id && ex?.organizer_id !== user.id) {
+      return { error: '삭제 권한이 없는 항목이 포함되어 있습니다.' }
+    }
+  }
+
+  const admin = createAdminClient()
+
+  const storagePaths = uploads.map((u) => u.storage_path).filter(Boolean) as string[]
+  if (storagePaths.length) {
+    await admin.storage.from('uploads').remove(storagePaths)
+  }
+
+  const { error: dbError } = await admin.from('uploads').delete().in('id', uploadIds)
+  if (dbError) {
+    console.error('[deleteUploads] db error:', dbError)
+    return { error: '삭제에 실패했습니다.' }
+  }
+
+  for (const id of exhibitionIds) {
+    revalidatePath(`/dashboard/exhibitions/${id}/uploads`)
+    revalidatePath(`/dashboard/exhibitions/${id}`)
+  }
+  for (const ex of exhibitions ?? []) {
+    revalidatePath(`/e/${ex.slug}/gallery`)
+  }
+  revalidatePath('/my')
+
+  return {}
+}
+
 export async function deleteUpload(uploadId: string): Promise<{ error?: string }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

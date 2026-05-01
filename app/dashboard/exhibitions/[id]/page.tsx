@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { QRCodeDisplay } from './QRCodeDisplay'
+import { DeleteExhibitionButton } from './DeleteExhibitionButton'
 import type { Exhibition } from '@/lib/supabase/types'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -98,12 +99,18 @@ export default async function ExhibitionDetailPage({
             </span>
           </div>
         </div>
-        <Link
-          href={`/dashboard/exhibitions/${id}/edit`}
-          className="shrink-0 text-xs border border-subtle text-fg px-3 py-1.5 hover:border-fg transition-colors whitespace-nowrap"
-        >
-          수정
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href={`/dashboard/exhibitions/${id}/edit`}
+            className="text-xs border border-subtle text-fg px-3 py-1.5 hover:border-fg transition-colors whitespace-nowrap"
+          >
+            수정
+          </Link>
+          <DeleteExhibitionButton
+            exhibitionId={id}
+            uploadCount={uploadCount ?? 0}
+          />
+        </div>
       </div>
 
       {/* 커버 이미지 */}

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import { isRedirectError } from 'next/dist/client/components/redirect-error'
 
 export type ExhibitionState = { error?: string }
@@ -116,5 +117,51 @@ export async function updateExhibition(
     if (isRedirectError(err)) throw err
     console.error('[updateExhibition] unexpected error:', err)
     return { error: '알 수 없는 오류가 발생했습니다. 다시 시도해 주세요.' }
+  }
+}
+
+export async function deleteExhibition(exhibitionId: string): Promise<ExhibitionState> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: '로그인이 필요합니다.' }
+
+    const { data: ex } = await supabase
+      .from('exhibitions')
+      .select('id, cover_images')
+      .eq('id', exhibitionId)
+      .eq('organizer_id', user.id)
+      .single()
+    if (!ex) return { error: '전시를 찾을 수 없습니다.' }
+
+    const { count: uploadCount } = await supabase
+      .from('uploads')
+      .select('*', { count: 'exact', head: true })
+      .eq('exhibition_id', exhibitionId)
+    if (uploadCount && uploadCount > 0) {
+      return { error: '관람객 기록이 있는 전시는 삭제할 수 없습니다.' }
+    }
+
+    const coverPaths = (ex.cover_images as string[] | null) ?? []
+    if (coverPaths.length > 0) {
+      await supabase.storage.from('covers').remove(coverPaths)
+    }
+
+    const { error: dbError } = await supabase
+      .from('exhibitions')
+      .delete()
+      .eq('id', exhibitionId)
+      .eq('organizer_id', user.id)
+    if (dbError) {
+      console.error('[deleteExhibition] db error:', dbError)
+      return { error: '삭제에 실패했습니다.' }
+    }
+
+    revalidatePath('/my')
+    redirect('/my')
+  } catch (err: unknown) {
+    if (isRedirectError(err)) throw err
+    console.error('[deleteExhibition] unexpected error:', err)
+    return { error: '알 수 없는 오류가 발생했습니다.' }
   }
 }

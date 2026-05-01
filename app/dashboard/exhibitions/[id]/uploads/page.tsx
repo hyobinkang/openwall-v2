@@ -97,7 +97,7 @@ export default async function ExhibitionUploadsPage({
           </p>
         </div>
       ) : (
-        <UploadsGrid items={items} showDelete />
+        <UploadsGrid items={items} allowSelect />
       )}
     </div>
   )

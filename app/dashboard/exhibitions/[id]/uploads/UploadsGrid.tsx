@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useTransition } from 'react'
 import Image from 'next/image'
-import { DeleteUploadButton } from '@/app/components/DeleteUploadButton'
+import { deleteUploads } from '@/app/actions/uploads'
 
 export type UploadItem = {
   id: string
@@ -81,18 +81,22 @@ function Modal({ item, onClose }: { item: UploadItem; onClose: () => void }) {
 function UploadCard({
   item,
   onClick,
-  onDelete,
+  selectMode,
+  isSelected,
 }: {
   item: UploadItem
   onClick: () => void
-  onDelete?: () => void
+  selectMode: boolean
+  isSelected: boolean
 }) {
   return (
     <div className="relative">
       <button
         type="button"
         onClick={onClick}
-        className="text-left bg-surface border border-subtle hover:border-fg transition-colors w-full aspect-square overflow-hidden flex flex-col"
+        className={`text-left bg-surface border transition-colors w-full aspect-square overflow-hidden flex flex-col ${
+          isSelected ? 'border-fg' : 'border-subtle hover:border-fg'
+        }`}
       >
         {item.type === 'photo' && item.publicUrl && (
           <div className="relative flex-1 bg-bg">
@@ -129,9 +133,13 @@ function UploadCard({
         </div>
       </button>
 
-      {onDelete && (
-        <div className="absolute top-2 right-2 z-10 bg-bg/70 px-1.5 py-0.5">
-          <DeleteUploadButton uploadId={item.id} onDeleted={onDelete} />
+      {selectMode && (
+        <div
+          className={`absolute top-2 left-2 w-5 h-5 rounded-full border-2 flex items-center justify-center pointer-events-none ${
+            isSelected ? 'bg-fg border-fg' : 'bg-bg/80 border-fg/50'
+          }`}
+        >
+          {isSelected && <span className="text-bg text-[10px] leading-none font-bold">✓</span>}
         </div>
       )}
     </div>
@@ -141,35 +149,101 @@ function UploadCard({
 // ─── 그리드 ────────────────────────────────────────────────
 export function UploadsGrid({
   items: initialItems,
-  showDelete = false,
+  allowSelect = false,
 }: {
   items: UploadItem[]
-  showDelete?: boolean
+  allowSelect?: boolean
 }) {
   const [items, setItems] = useState(initialItems)
-  const [selected, setSelected] = useState<UploadItem | null>(null)
-  const close = useCallback(() => setSelected(null), [])
+  const [modalItem, setModalItem] = useState<UploadItem | null>(null)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isDeleting, startDeleteTransition] = useTransition()
+  const closeModal = useCallback(() => setModalItem(null), [])
 
-  function handleDelete(id: string) {
-    setItems((prev) => prev.filter((item) => item.id !== id))
-    setSelected((prev) => (prev?.id === id ? null : prev))
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function exitSelectMode() {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  function handleCardClick(item: UploadItem) {
+    if (selectMode) {
+      toggleSelect(item.id)
+    } else {
+      setModalItem(item)
+    }
+  }
+
+  function handleDeleteSelected() {
+    const ids = Array.from(selectedIds)
+    startDeleteTransition(async () => {
+      const result = await deleteUploads(ids)
+      if (!result.error) {
+        setItems((prev) => prev.filter((item) => !selectedIds.has(item.id)))
+        exitSelectMode()
+      }
+    })
   }
 
   if (items.length === 0) return null
 
   return (
     <>
+      {allowSelect && (
+        <div className="flex items-center justify-end gap-4 mb-4 min-h-[24px]">
+          {selectMode ? (
+            <>
+              <span className="text-xs text-secondary">{selectedIds.size}개 선택됨</span>
+              <button
+                type="button"
+                onClick={exitSelectMode}
+                disabled={isDeleting}
+                className="text-xs text-secondary hover:text-fg disabled:opacity-40 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                disabled={selectedIds.size === 0 || isDeleting}
+                onClick={handleDeleteSelected}
+                className="text-xs text-red-400 hover:text-red-300 disabled:opacity-40 transition-colors"
+              >
+                {isDeleting ? '삭제 중…' : `${selectedIds.size}개 삭제`}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setSelectMode(true)}
+              className="text-xs text-secondary hover:text-fg transition-colors"
+            >
+              선택 삭제
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
         {items.map((item) => (
           <UploadCard
             key={item.id}
             item={item}
-            onClick={() => setSelected(item)}
-            onDelete={showDelete ? () => handleDelete(item.id) : undefined}
+            onClick={() => handleCardClick(item)}
+            selectMode={selectMode}
+            isSelected={selectedIds.has(item.id)}
           />
         ))}
       </div>
-      {selected && <Modal item={selected} onClose={close} />}
+
+      {!selectMode && modalItem && <Modal item={modalItem} onClose={closeModal} />}
     </>
   )
 }

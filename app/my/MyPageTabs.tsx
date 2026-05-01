@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useTransition } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { UploadModal, type ModalUploadItem } from '@/app/components/UploadModal'
-import { DeleteUploadButton } from '@/app/components/DeleteUploadButton'
+import { deleteUploads } from '@/app/actions/uploads'
 
 export type HostedExhibition = {
   id: string
@@ -52,22 +52,52 @@ export function MyPageTabs({
   participated: ParticipatedGroup[]
 }) {
   const [tab, setTab] = useState<'hosted' | 'participated'>('hosted')
-  const [selected, setSelected] = useState<ModalUploadItem | null>(null)
+  const [modalItem, setModalItem] = useState<ModalUploadItem | null>(null)
   const [groups, setGroups] = useState(participated)
-  const closeModal = useCallback(() => setSelected(null), [])
 
-  function handleDelete(exhibitionId: string, uploadId: string) {
-    setSelected(null)
-    setGroups((prev) =>
-      prev
-        .map((g) =>
-          g.exhibitionId === exhibitionId
-            ? { ...g, items: g.items.filter((item) => item.id !== uploadId) }
-            : g
-        )
-        .filter((g) => g.items.length > 0)
-    )
+  const [selectMode, setSelectMode] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [isDeleting, startDeleteTransition] = useTransition()
+
+  const closeModal = useCallback(() => setModalItem(null), [])
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
   }
+
+  function exitSelectMode() {
+    setSelectMode(false)
+    setSelectedIds(new Set())
+  }
+
+  function handleCardClick(item: UploadItem) {
+    if (selectMode) {
+      toggleSelect(item.id)
+    } else {
+      setModalItem(item)
+    }
+  }
+
+  function handleDeleteSelected() {
+    const ids = Array.from(selectedIds)
+    startDeleteTransition(async () => {
+      const result = await deleteUploads(ids)
+      if (!result.error) {
+        setGroups((prev) =>
+          prev
+            .map((g) => ({ ...g, items: g.items.filter((item) => !selectedIds.has(item.id)) }))
+            .filter((g) => g.items.length > 0)
+        )
+        exitSelectMode()
+      }
+    })
+  }
+
+  const allItems = groups.flatMap((g) => g.items)
 
   return (
     <div>
@@ -139,94 +169,143 @@ export function MyPageTabs({
             </p>
           </div>
         ) : (
-          <div className="space-y-12">
-            {groups.map((group) => (
-              <section key={group.exhibitionId}>
-                <div className="flex items-baseline justify-between mb-4">
-                  <h2 className="text-sm font-semibold text-fg">{group.title}</h2>
-                  <Link
-                    href={`/e/${group.slug}/gallery`}
+          <>
+            {/* 선택 삭제 툴바 */}
+            <div className="flex items-center justify-end gap-4 mb-6 min-h-[24px]">
+              {selectMode ? (
+                <>
+                  <span className="text-xs text-secondary">{selectedIds.size}개 선택됨</span>
+                  <button
+                    type="button"
+                    onClick={exitSelectMode}
+                    disabled={isDeleting}
+                    className="text-xs text-secondary hover:text-fg disabled:opacity-40 transition-colors"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    disabled={selectedIds.size === 0 || isDeleting}
+                    onClick={handleDeleteSelected}
+                    className="text-xs text-red-400 hover:text-red-300 disabled:opacity-40 transition-colors"
+                  >
+                    {isDeleting ? '삭제 중…' : `${selectedIds.size}개 삭제`}
+                  </button>
+                </>
+              ) : (
+                allItems.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectMode(true)}
                     className="text-xs text-secondary hover:text-fg transition-colors"
                   >
-                    전체 업로드 보기 →
-                  </Link>
-                </div>
+                    선택 삭제
+                  </button>
+                )
+              )}
+            </div>
 
-                <div className="space-y-3">
-                  {group.items.map((u) => {
-                    if (u.type === 'text') {
+            <div className="space-y-12">
+              {groups.map((group) => (
+                <section key={group.exhibitionId}>
+                  <div className="flex items-baseline justify-between mb-4">
+                    <h2 className="text-sm font-semibold text-fg">{group.title}</h2>
+                    <Link
+                      href={`/e/${group.slug}/gallery`}
+                      className="text-xs text-secondary hover:text-fg transition-colors"
+                    >
+                      전체 업로드 보기 →
+                    </Link>
+                  </div>
+
+                  <div className="space-y-3">
+                    {group.items.map((u) => {
+                      const isSelected = selectedIds.has(u.id)
+
+                      if (u.type === 'text') {
+                        return (
+                          <div key={u.id} className="relative">
+                            <button
+                              type="button"
+                              onClick={() => handleCardClick(u)}
+                              className={`w-full text-left border bg-surface px-4 py-3 transition-colors ${
+                                isSelected ? 'border-fg' : 'border-subtle hover:border-fg'
+                              }`}
+                            >
+                              {u.textContent && (
+                                <p className="text-sm text-fg leading-relaxed line-clamp-3 break-words">
+                                  {u.textContent}
+                                </p>
+                              )}
+                              <p className="text-xs text-secondary mt-1.5">
+                                {u.displayName} · {u.createdAt}
+                              </p>
+                            </button>
+                            {selectMode && (
+                              <div
+                                className={`absolute top-3 right-3 w-5 h-5 rounded-full border-2 flex items-center justify-center pointer-events-none ${
+                                  isSelected ? 'bg-fg border-fg' : 'bg-bg/80 border-fg/50'
+                                }`}
+                              >
+                                {isSelected && <span className="text-bg text-[10px] font-bold leading-none">✓</span>}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      }
+
                       return (
                         <div key={u.id} className="relative">
                           <button
                             type="button"
-                            onClick={() => setSelected(u)}
-                            className="w-full text-left border border-subtle bg-surface px-4 py-3 hover:border-fg transition-colors"
+                            onClick={() => handleCardClick(u)}
+                            className={`w-full text-left border bg-surface flex gap-4 p-3 transition-colors ${
+                              isSelected ? 'border-fg' : 'border-subtle hover:border-fg'
+                            }`}
                           >
-                            {u.textContent && (
-                              <p className="text-sm text-fg leading-relaxed line-clamp-3 break-words">
-                                {u.textContent}
-                              </p>
+                            {u.publicUrl && (
+                              <div className="relative w-20 h-20 flex-shrink-0 bg-bg">
+                                <Image
+                                  src={u.publicUrl}
+                                  alt="업로드 사진"
+                                  fill
+                                  sizes="80px"
+                                  className="object-cover"
+                                />
+                              </div>
                             )}
-                            <p className="text-xs text-secondary mt-1.5">
-                              {u.displayName} · {u.createdAt}
-                            </p>
+                            <div className="flex-1 min-w-0 flex flex-col justify-between">
+                              {u.textContent && (
+                                <p className="text-sm text-fg leading-relaxed line-clamp-2 break-words">
+                                  {u.textContent}
+                                </p>
+                              )}
+                              <p className="text-xs text-secondary mt-1">
+                                {u.displayName} · {u.createdAt}
+                              </p>
+                            </div>
                           </button>
-                          <div className="absolute top-2 right-2 bg-surface/80 px-1.5 py-0.5">
-                            <DeleteUploadButton
-                              uploadId={u.id}
-                              onDeleted={() => handleDelete(group.exhibitionId, u.id)}
-                            />
-                          </div>
-                        </div>
-                      )
-                    }
-
-                    return (
-                      <div key={u.id} className="relative">
-                        <button
-                          type="button"
-                          onClick={() => setSelected(u)}
-                          className="w-full text-left border border-subtle bg-surface flex gap-4 p-3 hover:border-fg transition-colors"
-                        >
-                          {u.publicUrl && (
-                            <div className="relative w-20 h-20 flex-shrink-0 bg-bg">
-                              <Image
-                                src={u.publicUrl}
-                                alt="업로드 사진"
-                                fill
-                                sizes="80px"
-                                className="object-cover"
-                              />
+                          {selectMode && (
+                            <div
+                              className={`absolute top-3 right-3 w-5 h-5 rounded-full border-2 flex items-center justify-center pointer-events-none ${
+                                isSelected ? 'bg-fg border-fg' : 'bg-bg/80 border-fg/50'
+                              }`}
+                            >
+                              {isSelected && <span className="text-bg text-[10px] font-bold leading-none">✓</span>}
                             </div>
                           )}
-                          <div className="flex-1 min-w-0 flex flex-col justify-between">
-                            {u.textContent && (
-                              <p className="text-sm text-fg leading-relaxed line-clamp-2 break-words">
-                                {u.textContent}
-                              </p>
-                            )}
-                            <p className="text-xs text-secondary mt-1">
-                              {u.displayName} · {u.createdAt}
-                            </p>
-                          </div>
-                        </button>
-                        <div className="absolute top-2 right-2 bg-surface/80 px-1.5 py-0.5">
-                          <DeleteUploadButton
-                            uploadId={u.id}
-                            onDeleted={() => handleDelete(group.exhibitionId, u.id)}
-                          />
                         </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </section>
-            ))}
-          </div>
+                      )
+                    })}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </>
         )
       )}
 
-      {selected && <UploadModal item={selected} onClose={closeModal} />}
+      {!selectMode && modalItem && <UploadModal item={modalItem} onClose={closeModal} />}
     </div>
   )
 }
