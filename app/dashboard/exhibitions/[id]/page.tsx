@@ -5,6 +5,7 @@ import { headers } from 'next/headers'
 import { createClient } from '@/lib/supabase/server'
 import { QRCodeDisplay } from './QRCodeDisplay'
 import { DeleteExhibitionButton } from './DeleteExhibitionButton'
+import { CloseExhibitionButton } from './CloseExhibitionButton'
 import type { Exhibition } from '@/lib/supabase/types'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -13,16 +14,18 @@ function coverUrl(path: string) {
   return `${SUPABASE_URL}/storage/v1/object/public/covers/${path}`
 }
 
-const STATUS_LABEL: Record<Exhibition['status'], string> = {
-  active: '진행 중',
-  draft: '초안',
-  closed: '종료',
-}
-
-const STATUS_CLASS: Record<Exhibition['status'], string> = {
-  active: 'text-fg border border-subtle',
-  draft: 'text-secondary border border-subtle',
-  closed: 'text-secondary border border-subtle',
+function getStatusInfo(ex: Exhibition) {
+  const now = new Date()
+  if (ex.status === 'draft') {
+    return { label: '임시저장', className: 'text-fg border border-fg/30 bg-white' }
+  }
+  if (ex.status === 'closed' || (ex.ends_at && new Date(ex.ends_at) < now)) {
+    return { label: '종료', className: 'text-gray-400 border border-gray-200 bg-gray-50' }
+  }
+  if (ex.starts_at && new Date(ex.starts_at) > now) {
+    return { label: '진행 전', className: 'text-blue-600 border border-blue-200 bg-blue-50' }
+  }
+  return { label: '진행 중', className: 'text-green-600 border border-green-200 bg-green-50' }
 }
 
 function formatDate(iso: string | null) {
@@ -54,21 +57,21 @@ export default async function ExhibitionDetailPage({
 
   if (!ex) notFound()
 
-  // 업로드 수 조회
   const { count: uploadCount } = await supabase
     .from('uploads')
     .select('*', { count: 'exact', head: true })
     .eq('exhibition_id', id)
 
-  // 전시 공개 URL
   const headersList = await headers()
   const host = headersList.get('host') ?? 'localhost:3000'
   const proto = process.env.NODE_ENV === 'production' ? 'https' : 'http'
   const exhibitionUrl = `${proto}://${host}/e/${ex.slug}`
 
+  const statusInfo = getStatusInfo(ex as Exhibition)
+  const isClosed = ex.status === 'closed'
+
   return (
     <div className="w-full">
-      {/* 뒤로가기 */}
       <Link
         href="/my"
         className="text-xs text-secondary hover:text-fg transition-colors"
@@ -76,7 +79,6 @@ export default async function ExhibitionDetailPage({
         ← 내 페이지로
       </Link>
 
-      {/* 헤더 */}
       <div className="mt-4 flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight truncate">{ex.title}</h1>
@@ -85,9 +87,9 @@ export default async function ExhibitionDetailPage({
           )}
           <div className="mt-2 flex items-center gap-3 flex-wrap">
             <span
-              className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_CLASS[ex.status]}`}
+              className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusInfo.className}`}
             >
-              {STATUS_LABEL[ex.status]}
+              {statusInfo.label}
             </span>
             {(ex.starts_at || ex.ends_at) && (
               <span className="text-xs text-secondary">
@@ -106,6 +108,7 @@ export default async function ExhibitionDetailPage({
           >
             수정
           </Link>
+          {!isClosed && <CloseExhibitionButton exhibitionId={id} />}
           <DeleteExhibitionButton
             exhibitionId={id}
             uploadCount={uploadCount ?? 0}
@@ -113,7 +116,6 @@ export default async function ExhibitionDetailPage({
         </div>
       </div>
 
-      {/* 커버 이미지 */}
       {ex.cover_images && ex.cover_images.length > 0 && (
         <>
           <hr className="my-8 border-subtle" />
@@ -145,15 +147,22 @@ export default async function ExhibitionDetailPage({
         <h2 className="text-xs font-medium uppercase tracking-widest text-secondary mb-6">
           QR 코드
         </h2>
-        <QRCodeDisplay url={exhibitionUrl} slug={ex.slug} />
-        <p className="mt-6 text-xs text-center text-secondary">
-          관람객이 이 QR을 스캔하면 사진·텍스트를 업로드할 수 있습니다.
-        </p>
+        {ex.status === 'draft' ? (
+          <p className="text-sm text-secondary text-center py-8 border border-dashed border-subtle">
+            전시를 생성하면 QR코드가 만들어집니다. 수정 버튼을 눌러 전시를 완성해주세요.
+          </p>
+        ) : (
+          <>
+            <QRCodeDisplay url={exhibitionUrl} slug={ex.slug} />
+            <p className="mt-6 text-xs text-center text-secondary">
+              관람객이 이 QR을 스캔하면 사진·텍스트를 업로드할 수 있습니다.
+            </p>
+          </>
+        )}
       </section>
 
       <hr className="my-8 border-subtle" />
 
-      {/* 업로드 목록 바로가기 */}
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xs font-medium uppercase tracking-widest text-secondary">

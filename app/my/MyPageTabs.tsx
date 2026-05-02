@@ -11,6 +11,8 @@ export type HostedExhibition = {
   title: string
   slug: string
   status: string
+  startsAt: string | null
+  endsAt: string | null
   createdAt: string
 }
 
@@ -30,10 +32,18 @@ export type ParticipatedGroup = {
   items: UploadItem[]
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  active: '진행 중',
-  closed: '종료',
-  draft: '준비 중',
+function getStatusInfo(ex: HostedExhibition): { label: string; className: string } {
+  const now = new Date()
+  if (ex.status === 'draft') {
+    return { label: '임시저장', className: 'text-fg border border-fg/30 bg-white' }
+  }
+  if (ex.status === 'closed' || (ex.endsAt && new Date(ex.endsAt) < now)) {
+    return { label: '종료', className: 'text-gray-400 border border-gray-200 bg-gray-50' }
+  }
+  if (ex.startsAt && new Date(ex.startsAt) > now) {
+    return { label: '진행 전', className: 'text-blue-600 border border-blue-200 bg-blue-50' }
+  }
+  return { label: '진행 중', className: 'text-green-600 border border-green-200 bg-green-50' }
 }
 
 function formatDate(iso: string) {
@@ -149,9 +159,14 @@ export function MyPageTabs({
                     <p className="text-sm font-medium text-fg">{ex.title}</p>
                     <p className="text-xs text-secondary mt-0.5">{formatDate(ex.createdAt)}</p>
                   </div>
-                  <span className="text-xs text-secondary ml-4 shrink-0">
-                    {STATUS_LABEL[ex.status] ?? ex.status}
-                  </span>
+                  {(() => {
+                    const info = getStatusInfo(ex)
+                    return (
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ml-4 shrink-0 ${info.className}`}>
+                        {info.label}
+                      </span>
+                    )
+                  })()}
                 </Link>
               ))}
             </div>

@@ -64,9 +64,11 @@ export default async function ExhibitionVisitorPage({
     userName = profile?.name ?? user.email?.split('@')[0] ?? null
   }
 
+  const isClosed = exhibition.status === 'closed'
+  const isDraft = exhibition.status === 'draft'
+
   return (
     <div className="min-h-screen bg-bg">
-      {/* 헤더 */}
       <header className="border-b border-subtle py-4">
         <div className="w-full px-20 flex items-center justify-between">
           <Link href={user ? '/my' : '/'} className="text-sm font-bold tracking-tight text-fg">
@@ -89,7 +91,6 @@ export default async function ExhibitionVisitorPage({
         <div className="mb-10">
           <h1 className="text-2xl font-bold tracking-tight">{exhibition.title}</h1>
 
-          {/* 커버 이미지 슬라이드 */}
           {exhibition.cover_images && exhibition.cover_images.length > 0 && (
             <div className="overflow-x-auto flex gap-2 mt-4" style={{ scrollbarWidth: 'none' }}>
               {exhibition.cover_images.map((path) => (
@@ -119,20 +120,19 @@ export default async function ExhibitionVisitorPage({
           )}
         </div>
 
-        {/* 상태별 분기 */}
-        {exhibition.status === 'closed' ? (
-          <div className="border border-subtle px-6 py-8 text-center">
-            <p className="text-sm font-medium text-fg">전시가 종료되었습니다.</p>
-            <p className="mt-1 text-xs text-secondary">
-              업로드가 마감됐지만 전시 기록은 보존됩니다.
-            </p>
-          </div>
-        ) : exhibition.status === 'draft' ? (
+        {isDraft ? (
           <div className="border border-dashed border-subtle px-6 py-8 text-center">
             <p className="text-sm text-secondary">준비 중인 전시입니다.</p>
           </div>
         ) : (
-          <UploadForm exhibitionId={exhibition.id} isLoggedIn={!!user} userName={userName} slug={slug} />
+          <>
+            {isClosed && (
+              <div className="mb-6 px-4 py-3 border border-gray-200 bg-gray-50 text-sm text-gray-500 text-center">
+                이 전시는 종료되었습니다.
+              </div>
+            )}
+            <UploadForm exhibitionId={exhibition.id} isLoggedIn={!!user} userName={userName} slug={slug} />
+          </>
         )}
       </main>
     </div>

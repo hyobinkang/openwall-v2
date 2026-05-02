@@ -4,14 +4,14 @@ import { useTransition, useRef, useState } from 'react'
 import Image from 'next/image'
 import imageCompression from 'browser-image-compression'
 import { createClient } from '@/lib/supabase/client'
-import { createExhibition } from '@/app/actions/exhibitions'
+import { createExhibition, saveDraft } from '@/app/actions/exhibitions'
 
 const MAX_COVERS = 9
 
 type CoverItem = {
   id: string
-  preview: string   // object URL
-  path: string | null  // storage path after upload
+  preview: string
+  path: string | null
   uploading: boolean
   uploadError: boolean
 }
@@ -56,6 +56,7 @@ async function uploadToStorage(file: File): Promise<string> {
 
 export function CreateExhibitionForm() {
   const [isPending, startTransition] = useTransition()
+  const [isDraftPending, startDraftTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
   const [slug, setSlug] = useState('')
@@ -63,6 +64,7 @@ export function CreateExhibitionForm() {
 
   const [covers, setCovers] = useState<CoverItem[]>([])
   const coverPickerRef = useRef<HTMLInputElement>(null)
+  const formRef = useRef<HTMLFormElement>(null)
 
   const slugValid = isValidSlug(slug)
   const isUploading = covers.some((c) => c.uploading)
@@ -84,9 +86,7 @@ export function CreateExhibitionForm() {
     if (!files.length) return
 
     if (covers.length + files.length > MAX_COVERS) {
-      setError(
-        `최대 ${MAX_COVERS}장까지 업로드할 수 있습니다.`
-      )
+      setError(`최대 ${MAX_COVERS}장까지 업로드할 수 있습니다.`)
       return
     }
 
@@ -130,6 +130,14 @@ export function CreateExhibitionForm() {
     })
   }
 
+  function buildFormData(form: HTMLFormElement): FormData {
+    const fd = new FormData(form)
+    for (const cover of covers) {
+      if (cover.path) fd.append('cover_path', cover.path)
+    }
+    return fd
+  }
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setError(null)
@@ -139,10 +147,7 @@ export function CreateExhibitionForm() {
       return
     }
 
-    const fd = new FormData(e.currentTarget)
-    for (const cover of covers) {
-      if (cover.path) fd.append('cover_path', cover.path)
-    }
+    const fd = buildFormData(e.currentTarget)
 
     startTransition(async () => {
       const result = await createExhibition(fd)
@@ -150,8 +155,20 @@ export function CreateExhibitionForm() {
     })
   }
 
+  function handleDraftSave() {
+    setError(null)
+    if (!formRef.current) return
+
+    const fd = buildFormData(formRef.current)
+
+    startDraftTransition(async () => {
+      const result = await saveDraft(fd)
+      if (result?.error) setError(result.error)
+    })
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
       {/* 제목 */}
       <div className="space-y-1.5">
         <label
@@ -337,8 +354,17 @@ export function CreateExhibitionForm() {
       )}
 
       <button
+        type="button"
+        onClick={handleDraftSave}
+        disabled={isDraftPending || isPending || isUploading}
+        className="w-full border border-subtle py-3 text-sm font-medium tracking-wide text-fg transition-colors hover:border-fg disabled:opacity-40"
+      >
+        {isDraftPending ? '저장 중…' : '임시저장'}
+      </button>
+
+      <button
         type="submit"
-        disabled={isPending || isUploading || (slug.length > 0 && !slugValid)}
+        disabled={isPending || isDraftPending || isUploading || (slug.length > 0 && !slugValid)}
         className="w-full bg-fg py-3 text-sm font-medium tracking-wide text-bg transition-colors hover:bg-gray6 disabled:opacity-40"
       >
         {isPending ? '생성 중…' : isUploading ? '사진 업로드 중…' : '전시 생성하기'}

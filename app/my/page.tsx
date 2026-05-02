@@ -34,7 +34,7 @@ export default async function MyPage() {
       .single(),
     supabase
       .from('exhibitions')
-      .select('id, title, slug, status, created_at')
+      .select('id, title, slug, status, starts_at, ends_at, created_at')
       .eq('organizer_id', user.id)
       .order('created_at', { ascending: false }),
   ])
@@ -62,6 +62,8 @@ export default async function MyPage() {
     title: ex.title,
     slug: ex.slug,
     status: ex.status,
+    startsAt: ex.starts_at ?? null,
+    endsAt: ex.ends_at ?? null,
     createdAt: ex.created_at,
   }))
 

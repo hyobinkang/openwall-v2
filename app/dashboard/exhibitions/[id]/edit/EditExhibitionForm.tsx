@@ -10,7 +10,7 @@ const MAX_COVERS = 9
 
 const STATUS_OPTIONS = [
   { value: 'active', label: '진행 중' },
-  { value: 'draft', label: '초안' },
+  { value: 'draft', label: '임시저장' },
   { value: 'closed', label: '종료' },
 ] as const
 
@@ -22,6 +22,10 @@ type NewCoverItem = {
   path: string | null
   uploading: boolean
   uploadError: boolean
+}
+
+function isValidSlug(slug: string) {
+  return /^[a-z0-9-]+$/.test(slug) && slug.length > 0
 }
 
 async function uploadToStorage(file: File): Promise<string> {
@@ -50,7 +54,7 @@ export function EditExhibitionForm({
   id,
   title: initialTitle,
   description: initialDescription,
-  slug,
+  slug: initialSlug,
   startsAt,
   endsAt,
   status: initialStatus,
@@ -68,12 +72,16 @@ export function EditExhibitionForm({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
+  const [slug, setSlug] = useState(initialStatus === 'draft' ? '' : initialSlug)
+  const isDraft = initialStatus === 'draft'
+
   const [existingCovers, setExistingCovers] = useState<InitialCover[]>(initialCovers)
   const [newCovers, setNewCovers] = useState<NewCoverItem[]>([])
   const coverPickerRef = useRef<HTMLInputElement>(null)
 
   const totalCovers = existingCovers.length + newCovers.length
   const isUploading = newCovers.some((c) => c.uploading)
+  const slugValid = isValidSlug(slug)
 
   function handleCoverPick(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []).filter((f) => f.type.startsWith('image/'))
@@ -128,11 +136,12 @@ export function EditExhibitionForm({
     })
   }
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setError(null)
+  function buildFormData(form: HTMLFormElement, overrideStatus?: string): FormData {
+    const fd = new FormData(form)
 
-    const fd = new FormData(e.currentTarget)
+    if (overrideStatus) {
+      fd.set('status', overrideStatus)
+    }
 
     const keptPaths = new Set(existingCovers.map((c) => c.path))
     for (const { path } of initialCovers) {
@@ -142,6 +151,15 @@ export function EditExhibitionForm({
     for (const cover of newCovers) {
       if (cover.path) fd.append('new_cover_path', cover.path)
     }
+
+    return fd
+  }
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
+
+    const fd = buildFormData(e.currentTarget)
 
     startTransition(async () => {
       try {
@@ -154,8 +172,33 @@ export function EditExhibitionForm({
     })
   }
 
+  function handlePublish(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
+
+    if (!slugValid) {
+      setError('올바른 슬러그를 입력해 주세요.')
+      return
+    }
+
+    const fd = buildFormData(e.currentTarget, 'active')
+
+    startTransition(async () => {
+      try {
+        const result = await updateExhibition(fd)
+        if (result?.error) setError(result.error)
+      } catch (err) {
+        console.error('[EditExhibitionForm] publish threw:', err)
+        setError('생성 중 오류가 발생했습니다. 다시 시도해 주세요.')
+      }
+    })
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form
+      onSubmit={isDraft ? handlePublish : handleSubmit}
+      className="space-y-6"
+    >
       <input type="hidden" name="id" value={id} />
 
       {/* 제목 */}
@@ -176,20 +219,50 @@ export function EditExhibitionForm({
         />
       </div>
 
-      {/* 슬러그 (읽기 전용) */}
+      {/* 슬러그 */}
       <div className="space-y-1.5">
         <span className="block text-xs font-medium uppercase tracking-widest text-secondary">
-          슬러그
+          슬러그 {isDraft && <span className="text-red-400">*</span>}
         </span>
-        <div className="flex items-center">
-          <span className="border border-subtle bg-surface px-3 py-2.5 text-sm text-secondary whitespace-nowrap select-none">
-            /e/
-          </span>
-          <span className="flex-1 border border-l-0 border-subtle bg-bg px-3 py-2.5 text-sm font-mono text-secondary">
-            {slug}
-          </span>
-        </div>
-        <p className="text-xs text-muted">슬러그는 수정할 수 없습니다. QR URL이 변경됩니다.</p>
+        {isDraft ? (
+          <>
+            <div className="flex items-center">
+              <span className="border border-r-0 border-subtle bg-surface px-3 py-2.5 text-sm text-secondary whitespace-nowrap select-none">
+                /e/
+              </span>
+              <input
+                name="slug"
+                type="text"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder="light-and-shadow"
+                className={`flex-1 border bg-surface text-fg px-3 py-2.5 text-sm font-mono placeholder:text-muted focus:outline-none transition-colors ${
+                  slug && !slugValid
+                    ? 'border-red-500 focus:border-red-400'
+                    : 'border-subtle focus:border-fg'
+                }`}
+              />
+            </div>
+            <p className="text-xs text-secondary">
+              영문 소문자, 숫자, 하이픈만 사용 가능. QR 코드 URL에 쓰입니다.
+              {slug && !slugValid && (
+                <span className="text-red-400 ml-2">올바르지 않은 형식입니다.</span>
+              )}
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center">
+              <span className="border border-subtle bg-surface px-3 py-2.5 text-sm text-secondary whitespace-nowrap select-none">
+                /e/
+              </span>
+              <span className="flex-1 border border-l-0 border-subtle bg-bg px-3 py-2.5 text-sm font-mono text-secondary">
+                {initialSlug}
+              </span>
+            </div>
+            <p className="text-xs text-muted">슬러그는 수정할 수 없습니다. QR URL이 변경됩니다.</p>
+          </>
+        )}
       </div>
 
       {/* 설명 */}
@@ -243,27 +316,34 @@ export function EditExhibitionForm({
         </div>
       </div>
 
-      {/* 상태 */}
-      <div className="space-y-1.5">
-        <label
-          htmlFor="status"
-          className="block text-xs font-medium uppercase tracking-widest text-secondary"
-        >
-          상태
-        </label>
-        <select
-          id="status"
-          name="status"
-          defaultValue={initialStatus}
-          className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors"
-        >
-          {STATUS_OPTIONS.map(({ value, label }) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* 상태 (비임시저장 전시만) */}
+      {!isDraft && (
+        <div className="space-y-1.5">
+          <label
+            htmlFor="status"
+            className="block text-xs font-medium uppercase tracking-widest text-secondary"
+          >
+            상태
+          </label>
+          <select
+            id="status"
+            name="status"
+            defaultValue={initialStatus}
+            className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors"
+          >
+            {STATUS_OPTIONS.filter((o) => o.value !== 'draft').map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* 임시저장인 경우 hidden status */}
+      {isDraft && (
+        <input type="hidden" name="status" value="draft" />
+      )}
 
       {/* 커버 이미지 */}
       <div className="space-y-2">
@@ -365,13 +445,23 @@ export function EditExhibitionForm({
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={isPending || isUploading}
-        className="w-full bg-fg py-3 text-sm font-medium tracking-wide text-bg transition-colors hover:bg-gray6 disabled:opacity-40"
-      >
-        {isPending ? '저장 중…' : isUploading ? '사진 업로드 중…' : '저장하기'}
-      </button>
+      {isDraft ? (
+        <button
+          type="submit"
+          disabled={isPending || isUploading || (slug.length > 0 && !slugValid)}
+          className="w-full bg-fg py-3 text-sm font-medium tracking-wide text-bg transition-colors hover:bg-gray6 disabled:opacity-40"
+        >
+          {isPending ? '생성 중…' : isUploading ? '사진 업로드 중…' : '전시 생성하기'}
+        </button>
+      ) : (
+        <button
+          type="submit"
+          disabled={isPending || isUploading}
+          className="w-full bg-fg py-3 text-sm font-medium tracking-wide text-bg transition-colors hover:bg-gray6 disabled:opacity-40"
+        >
+          {isPending ? '저장 중…' : isUploading ? '사진 업로드 중…' : '저장하기'}
+        </button>
+      )}
     </form>
   )
 }
