@@ -78,7 +78,7 @@ export async function saveDraft(
   const ends_at = (formData.get('ends_at') as string) || null
   const cover_images = formData.getAll('cover_path') as string[]
 
-  const slug = title ? toSlug(title) : `draft-${Date.now().toString(36)}`
+  const slug = title ? toSlug(title) : `temp-${user.id.slice(0, 8)}-${Date.now().toString(36)}`
 
   const { data, error } = await supabase
     .from('exhibitions')
