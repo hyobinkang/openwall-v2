@@ -192,7 +192,9 @@ export function EditExhibitionForm({
       try {
         const result = await updateExhibition(fd)
         if (result?.error) setError(result.error)
-      } catch (err) {
+      } catch (err: unknown) {
+        const digest = (err as { digest?: string })?.digest
+        if (digest?.startsWith('NEXT_REDIRECT')) return
         console.error('[EditExhibitionForm] updateExhibition threw:', err)
         setError('저장 중 오류가 발생했습니다. 다시 시도해 주세요.')
       }
@@ -214,7 +216,9 @@ export function EditExhibitionForm({
       try {
         const result = await updateExhibition(fd)
         if (result?.error) setError(result.error)
-      } catch (err) {
+      } catch (err: unknown) {
+        const digest = (err as { digest?: string })?.digest
+        if (digest?.startsWith('NEXT_REDIRECT')) return
         console.error('[EditExhibitionForm] publish threw:', err)
         setError('생성 중 오류가 발생했습니다. 다시 시도해 주세요.')
       }
