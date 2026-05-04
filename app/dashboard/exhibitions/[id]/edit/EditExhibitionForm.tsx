@@ -86,7 +86,7 @@ export function EditExhibitionForm({
   const [error, setError] = useState<string | null>(null)
 
   const isTempSlug = !initialSlug || initialSlug.startsWith('temp-') || initialSlug.startsWith('ex-')
-  const [slug, setSlug] = useState(isTempSlug ? '' : initialSlug)
+  const [slug, setSlug] = useState(isTempSlug ? toSlug(initialTitle ?? '') : initialSlug)
   const [slugTouched, setSlugTouched] = useState(!isTempSlug)
   const isDraft = initialStatus === 'draft'
 
