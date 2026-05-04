@@ -17,6 +17,7 @@ type CoverItem = {
 }
 
 function toSlug(title: string): string {
+  if (!title.trim()) return ''
   const ascii = title
     .toLowerCase()
     .replace(/[^\x00-\x7F]/g, '')
@@ -25,7 +26,7 @@ function toSlug(title: string): string {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .slice(0, 30)
-  return ascii || `ex-${Date.now().toString(36)}`
+  return ascii
 }
 
 function isValidSlug(slug: string) {
@@ -70,8 +71,9 @@ export function CreateExhibitionForm() {
   const isUploading = covers.some((c) => c.uploading)
 
   function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!slugTouched || slug.startsWith('temp-') || slug.startsWith('ex-')) {
-      setSlug(toSlug(e.target.value))
+    const val = e.target.value
+    if (!slugTouched) {
+      setSlug(toSlug(val))
     }
   }
 

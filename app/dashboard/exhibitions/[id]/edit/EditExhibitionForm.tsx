@@ -25,6 +25,7 @@ type NewCoverItem = {
 }
 
 function toSlug(title: string): string {
+  if (!title.trim()) return ''
   const ascii = title
     .toLowerCase()
     .replace(/[^\x00-\x7F]/g, '')
@@ -33,7 +34,7 @@ function toSlug(title: string): string {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
     .slice(0, 30)
-  return ascii || `ex-${Date.now().toString(36)}`
+  return ascii
 }
 
 function isValidSlug(slug: string) {
@@ -98,9 +99,9 @@ export function EditExhibitionForm({
   const slugValid = isValidSlug(slug)
 
   function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const val = e.target.value
     if (isDraft && !slugTouched) {
-      const trimmed = e.target.value.trim()
-      setSlug(trimmed ? toSlug(trimmed) : '')
+      setSlug(toSlug(val))
     }
   }
 
