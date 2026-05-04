@@ -8,7 +8,7 @@ import { deleteUploads } from '@/app/actions/uploads'
 
 export type HostedExhibition = {
   id: string
-  title: string
+  title: string | null
   slug: string
   status: string
   startsAt: string | null
@@ -165,7 +165,9 @@ export function MyPageTabs({
                   className="flex items-center justify-between border border-subtle px-4 py-3 hover:opacity-70 transition-opacity"
                 >
                   <div>
-                    <p className="text-sm font-medium text-fg">{ex.title}</p>
+                    <p className={`text-sm font-medium ${ex.title ? 'text-fg' : 'text-secondary'}`}>
+                      {ex.title || '제목 없는 전시'}
+                    </p>
                     <p className="text-xs text-secondary mt-0.5">{formatDate(ex.createdAt)}</p>
                   </div>
                   {(() => {

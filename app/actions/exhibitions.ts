@@ -72,14 +72,13 @@ export async function saveDraft(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const title = (formData.get('title') as string)?.trim() || '제목 없는 전시'
+  const title = (formData.get('title') as string)?.trim() ?? ''
   const description = (formData.get('description') as string | null)?.trim() || null
   const starts_at = (formData.get('starts_at') as string) || null
   const ends_at = (formData.get('ends_at') as string) || null
   const cover_images = formData.getAll('cover_path') as string[]
 
-  const rawSlug = toSlug(title)
-  const slug = `${rawSlug}-${Date.now().toString(36)}`
+  const slug = title ? toSlug(title) : `draft-${Date.now().toString(36)}`
 
   const { data, error } = await supabase
     .from('exhibitions')
