@@ -12,9 +12,6 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const displayName =
-    (user.user_metadata?.name as string | undefined) ?? user.email ?? '주최자'
-
   return (
     <div className="min-h-screen bg-bg">
       <header className="sticky top-0 z-10 bg-bg border-b border-subtle">
@@ -26,14 +23,11 @@ export default async function DashboardLayout({
             Openwall
           </Link>
           <div className="flex items-center gap-5">
-            <span className="text-sm text-secondary hidden sm:block">
-              {displayName}
-            </span>
             <Link
               href="/my"
               className="text-sm text-secondary hover:text-fg transition-colors"
             >
-              내 페이지
+              마이페이지
             </Link>
             <form action={logout}>
               <button

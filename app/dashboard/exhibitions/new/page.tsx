@@ -12,7 +12,7 @@ export default function NewExhibitionPage() {
           href="/my"
           className="text-xs text-secondary hover:text-fg transition-colors"
         >
-          ← 내 페이지로
+          ← 마이페이지로
         </Link>
         <h1 className="mt-3 text-2xl font-bold tracking-tight">새 전시 만들기</h1>
         <p className="mt-1 text-sm text-secondary">

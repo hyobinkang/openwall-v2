@@ -104,7 +104,7 @@ export default async function ExhibitionGalleryPage({
           </Link>
           {user ? (
             <Link href="/my" className="text-xs text-secondary hover:text-fg transition-colors">
-              내 페이지
+              마이페이지
             </Link>
           ) : (
             <Link href="/login" className="text-xs text-secondary hover:text-fg transition-colors">

@@ -85,7 +85,7 @@ export default async function ExhibitionDetailPage({
         href="/my"
         className="text-xs text-secondary hover:text-fg transition-colors"
       >
-        ← 내 페이지로
+        ← 마이페이지로
       </Link>
 
       <div className="mt-4 flex items-start justify-between gap-4">
