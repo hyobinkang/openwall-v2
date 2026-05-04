@@ -62,6 +62,7 @@ export function CreateExhibitionForm() {
 
   const [slug, setSlug] = useState('')
   const [slugTouched, setSlugTouched] = useState(false)
+  const [startsAt, setStartsAt] = useState('')
 
   const [covers, setCovers] = useState<CoverItem[]>([])
   const coverPickerRef = useRef<HTMLInputElement>(null)
@@ -80,6 +81,15 @@ export function CreateExhibitionForm() {
   function handleSlugChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSlugTouched(true)
     setSlug(e.target.value)
+  }
+
+  function handleEndsAtChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const endsAt = e.target.value
+    if (startsAt && endsAt && endsAt < startsAt) {
+      setError('종료일은 시작일 이후여야 합니다.')
+    } else {
+      setError(null)
+    }
   }
 
   function handleCoverPick(e: React.ChangeEvent<HTMLInputElement>) {
@@ -153,6 +163,13 @@ export function CreateExhibitionForm() {
 
     const fd = buildFormData(e.currentTarget)
 
+    const endsAt = fd.get('ends_at') as string
+    const startsAtVal = fd.get('starts_at') as string
+    if (startsAtVal && endsAt && endsAt < startsAtVal) {
+      setError('종료일은 시작일 이후여야 합니다.')
+      return
+    }
+
     startTransition(async () => {
       const result = await createExhibition(fd)
       if (result?.error) setError(result.error)
@@ -164,6 +181,13 @@ export function CreateExhibitionForm() {
     if (!formRef.current) return
 
     const fd = buildFormData(formRef.current)
+
+    const endsAt = fd.get('ends_at') as string
+    const startsAtVal = fd.get('starts_at') as string
+    if (startsAtVal && endsAt && endsAt < startsAtVal) {
+      setError('종료일은 시작일 이후여야 합니다.')
+      return
+    }
 
     startDraftTransition(async () => {
       const result = await saveDraft(fd)
@@ -257,6 +281,8 @@ export function CreateExhibitionForm() {
             id="starts_at"
             name="starts_at"
             type="date"
+            value={startsAt}
+            onChange={(e) => setStartsAt(e.target.value)}
             className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors"
           />
         </div>
@@ -271,6 +297,7 @@ export function CreateExhibitionForm() {
             id="ends_at"
             name="ends_at"
             type="date"
+            onChange={handleEndsAtChange}
             className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors"
           />
         </div>

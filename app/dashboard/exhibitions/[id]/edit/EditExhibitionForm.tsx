@@ -68,8 +68,8 @@ export function EditExhibitionForm({
   title: initialTitle,
   description: initialDescription,
   slug: initialSlug,
-  startsAt,
-  endsAt,
+  startsAt: initialStartsAt,
+  endsAt: initialEndsAt,
   status: initialStatus,
   initialCovers,
 }: {
@@ -90,6 +90,8 @@ export function EditExhibitionForm({
   const [slugTouched, setSlugTouched] = useState(!isTempSlug)
   const isDraft = initialStatus === 'draft'
 
+  const [startsAt, setStartsAt] = useState(initialStartsAt)
+
   const [existingCovers, setExistingCovers] = useState<InitialCover[]>(initialCovers)
   const [newCovers, setNewCovers] = useState<NewCoverItem[]>([])
   const coverPickerRef = useRef<HTMLInputElement>(null)
@@ -108,6 +110,15 @@ export function EditExhibitionForm({
   function handleSlugChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSlugTouched(true)
     setSlug(e.target.value)
+  }
+
+  function handleEndsAtChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const endsAt = e.target.value
+    if (startsAt && endsAt && endsAt < startsAt) {
+      setError('종료일은 시작일 이후여야 합니다.')
+    } else {
+      setError(null)
+    }
   }
 
   function handleCoverPick(e: React.ChangeEvent<HTMLInputElement>) {
@@ -188,6 +199,13 @@ export function EditExhibitionForm({
 
     const fd = buildFormData(e.currentTarget)
 
+    const endsAt = fd.get('ends_at') as string
+    const startsAtVal = fd.get('starts_at') as string
+    if (startsAtVal && endsAt && endsAt < startsAtVal) {
+      setError('종료일은 시작일 이후여야 합니다.')
+      return
+    }
+
     startTransition(async () => {
       try {
         const result = await updateExhibition(fd)
@@ -211,6 +229,13 @@ export function EditExhibitionForm({
     }
 
     const fd = buildFormData(e.currentTarget, 'active')
+
+    const endsAt = fd.get('ends_at') as string
+    const startsAtVal = fd.get('starts_at') as string
+    if (startsAtVal && endsAt && endsAt < startsAtVal) {
+      setError('종료일은 시작일 이후여야 합니다.')
+      return
+    }
 
     startTransition(async () => {
       try {
@@ -328,7 +353,8 @@ export function EditExhibitionForm({
             id="starts_at"
             name="starts_at"
             type="date"
-            defaultValue={startsAt}
+            value={startsAt}
+            onChange={(e) => setStartsAt(e.target.value)}
             className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors"
           />
         </div>
@@ -343,7 +369,8 @@ export function EditExhibitionForm({
             id="ends_at"
             name="ends_at"
             type="date"
-            defaultValue={endsAt}
+            defaultValue={initialEndsAt}
+            onChange={handleEndsAtChange}
             className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors"
           />
         </div>
