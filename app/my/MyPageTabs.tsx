@@ -34,7 +34,10 @@ export type ParticipatedGroup = {
 
 function parseEndsAt(endsAt: string | null): Date | null {
   if (!endsAt) return null
-  return endsAt.includes('T') ? new Date(endsAt) : new Date(endsAt + 'T23:59:59')
+  const d = new Date(endsAt)
+  // ends_at이 00:00:00+00 (자정 UTC)으로 저장되므로 하루 끝(23:59:59 KST = 14:59:59 UTC)으로 보정
+  // 즉 UTC 기준으로 하루(86400초 - 1초)를 더해줌
+  return new Date(d.getTime() + (24 * 60 * 60 * 1000 - 1000))
 }
 
 function getStatusInfo(ex: HostedExhibition): { label: string; className: string } {
