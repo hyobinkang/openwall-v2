@@ -106,6 +106,8 @@ export async function saveDraft(
 export async function updateExhibition(
   formData: FormData
 ): Promise<ExhibitionState> {
+  let updatedId: string | undefined
+
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -183,12 +185,16 @@ export async function updateExhibition(
       return { error: '수정에 실패했습니다. 다시 시도해 주세요.' }
     }
 
-    redirect(`/dashboard/exhibitions/${id}`)
+    updatedId = id
   } catch (err: unknown) {
-    if (isRedirectError(err)) throw err
+    if ((err as { digest?: string }).digest?.startsWith('NEXT_REDIRECT')) throw err
     console.error('[updateExhibition] unexpected error:', err)
     return { error: '알 수 없는 오류가 발생했습니다. 다시 시도해 주세요.' }
   }
+
+  revalidatePath(`/dashboard/exhibitions/${updatedId}`)
+  revalidatePath('/my')
+  redirect(`/dashboard/exhibitions/${updatedId}`)
 }
 
 export async function closeExhibition(exhibitionId: string): Promise<ExhibitionState> {
