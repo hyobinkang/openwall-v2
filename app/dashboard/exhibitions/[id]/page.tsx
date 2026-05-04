@@ -14,18 +14,24 @@ function coverUrl(path: string) {
   return `${SUPABASE_URL}/storage/v1/object/public/covers/${path}`
 }
 
+function parseEndsAt(endsAt: string | null): Date | null {
+  if (!endsAt) return null
+  return endsAt.includes('T') ? new Date(endsAt) : new Date(endsAt + 'T23:59:59')
+}
+
 function getStatusInfo(ex: Exhibition) {
   const now = new Date()
   if (ex.status === 'draft') {
-    return { label: '임시저장', className: 'text-fg border border-fg/30 bg-white' }
+    return { label: '임시저장', className: 'border border-white text-white bg-black' }
   }
-  if (ex.status === 'closed' || (ex.ends_at && new Date(ex.ends_at) < now)) {
-    return { label: '종료', className: 'text-gray-400 border border-gray-200 bg-gray-50' }
+  const endsAt = parseEndsAt(ex.ends_at)
+  if (ex.status === 'closed' || (endsAt && endsAt < now)) {
+    return { label: '종료', className: 'border border-gray-500 text-gray-500 bg-black' }
   }
   if (ex.starts_at && new Date(ex.starts_at) > now) {
-    return { label: '진행 전', className: 'text-blue-600 border border-blue-200 bg-blue-50' }
+    return { label: '진행 전', className: 'border border-blue-400 text-blue-400 bg-black' }
   }
-  return { label: '진행 중', className: 'text-green-600 border border-green-200 bg-green-50' }
+  return { label: '진행 중', className: 'border border-green-400 text-green-400 bg-black' }
 }
 
 function formatDate(iso: string | null) {
@@ -87,7 +93,7 @@ export default async function ExhibitionDetailPage({
           )}
           <div className="mt-2 flex items-center gap-3 flex-wrap">
             <span
-              className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusInfo.className}`}
+              className={`text-sm font-medium px-3 py-1 rounded-full ${statusInfo.className}`}
             >
               {statusInfo.label}
             </span>

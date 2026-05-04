@@ -32,18 +32,24 @@ export type ParticipatedGroup = {
   items: UploadItem[]
 }
 
+function parseEndsAt(endsAt: string | null): Date | null {
+  if (!endsAt) return null
+  return endsAt.includes('T') ? new Date(endsAt) : new Date(endsAt + 'T23:59:59')
+}
+
 function getStatusInfo(ex: HostedExhibition): { label: string; className: string } {
   const now = new Date()
   if (ex.status === 'draft') {
-    return { label: '임시저장', className: 'text-fg border border-fg/30 bg-white' }
+    return { label: '임시저장', className: 'border border-white text-white bg-black' }
   }
-  if (ex.status === 'closed' || (ex.endsAt && new Date(ex.endsAt) < now)) {
-    return { label: '종료', className: 'text-gray-400 border border-gray-200 bg-gray-50' }
+  const endsAt = parseEndsAt(ex.endsAt)
+  if (ex.status === 'closed' || (endsAt && endsAt < now)) {
+    return { label: '종료', className: 'border border-gray-500 text-gray-500 bg-black' }
   }
   if (ex.startsAt && new Date(ex.startsAt) > now) {
-    return { label: '진행 전', className: 'text-blue-600 border border-blue-200 bg-blue-50' }
+    return { label: '진행 전', className: 'border border-blue-400 text-blue-400 bg-black' }
   }
-  return { label: '진행 중', className: 'text-green-600 border border-green-200 bg-green-50' }
+  return { label: '진행 중', className: 'border border-green-400 text-green-400 bg-black' }
 }
 
 function formatDate(iso: string) {
@@ -162,7 +168,7 @@ export function MyPageTabs({
                   {(() => {
                     const info = getStatusInfo(ex)
                     return (
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ml-4 shrink-0 ${info.className}`}>
+                      <span className={`text-sm font-medium px-3 py-1 rounded-full ml-4 shrink-0 ${info.className}`}>
                         {info.label}
                       </span>
                     )
