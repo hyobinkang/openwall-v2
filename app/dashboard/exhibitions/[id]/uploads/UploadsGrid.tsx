@@ -94,12 +94,12 @@ function UploadCard({
       <button
         type="button"
         onClick={onClick}
-        className={`text-left bg-surface border transition-colors w-full aspect-square overflow-hidden flex flex-col ${
+        className={`text-left bg-black border transition-colors w-full aspect-square overflow-hidden flex flex-col ${
           isSelected ? 'border-fg' : 'border-subtle hover:border-fg'
         }`}
       >
         {item.type === 'photo' && item.publicUrl && (
-          <div className="relative flex-1 bg-bg">
+          <div className="relative flex-1 bg-black">
             <Image
               src={item.publicUrl}
               alt={item.caption ?? '업로드 사진'}
