@@ -84,10 +84,9 @@ export function EditExhibitionForm({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  const [slug, setSlug] = useState(
-    initialSlug && !initialSlug.startsWith('temp-') ? initialSlug : ''
-  )
-  const [slugTouched, setSlugTouched] = useState(false)
+  const isTempSlug = !initialSlug || initialSlug.startsWith('temp-') || initialSlug.startsWith('ex-')
+  const [slug, setSlug] = useState(isTempSlug ? '' : initialSlug)
+  const [slugTouched, setSlugTouched] = useState(!isTempSlug)
   const isDraft = initialStatus === 'draft'
 
   const [existingCovers, setExistingCovers] = useState<InitialCover[]>(initialCovers)
@@ -99,7 +98,10 @@ export function EditExhibitionForm({
   const slugValid = isValidSlug(slug)
 
   function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (isDraft && !slugTouched) setSlug(toSlug(e.target.value))
+    if (isDraft && !slugTouched) {
+      const trimmed = e.target.value.trim()
+      setSlug(trimmed ? toSlug(trimmed) : '')
+    }
   }
 
   function handleSlugChange(e: React.ChangeEvent<HTMLInputElement>) {

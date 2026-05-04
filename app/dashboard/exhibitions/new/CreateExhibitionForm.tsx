@@ -70,7 +70,9 @@ export function CreateExhibitionForm() {
   const isUploading = covers.some((c) => c.uploading)
 
   function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    if (!slugTouched) setSlug(toSlug(e.target.value))
+    if (!slugTouched || slug.startsWith('temp-') || slug.startsWith('ex-')) {
+      setSlug(toSlug(e.target.value))
+    }
   }
 
   function handleSlugChange(e: React.ChangeEvent<HTMLInputElement>) {
