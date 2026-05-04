@@ -24,6 +24,18 @@ type NewCoverItem = {
   uploadError: boolean
 }
 
+function toSlug(title: string): string {
+  const ascii = title
+    .toLowerCase()
+    .replace(/[^\x00-\x7F]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .slice(0, 30)
+  return ascii || `ex-${Date.now().toString(36)}`
+}
+
 function isValidSlug(slug: string) {
   return /^[a-z0-9-]+$/.test(slug) && slug.length > 0
 }
@@ -61,7 +73,7 @@ export function EditExhibitionForm({
   initialCovers,
 }: {
   id: string
-  title: string
+  title: string | null
   description: string | null
   slug: string
   startsAt: string
@@ -72,7 +84,8 @@ export function EditExhibitionForm({
   const [isPending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
 
-  const [slug, setSlug] = useState(initialStatus === 'draft' ? '' : initialSlug)
+  const [slug, setSlug] = useState(initialSlug ?? '')
+  const [slugTouched, setSlugTouched] = useState(false)
   const isDraft = initialStatus === 'draft'
 
   const [existingCovers, setExistingCovers] = useState<InitialCover[]>(initialCovers)
@@ -82,6 +95,15 @@ export function EditExhibitionForm({
   const totalCovers = existingCovers.length + newCovers.length
   const isUploading = newCovers.some((c) => c.uploading)
   const slugValid = isValidSlug(slug)
+
+  function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (isDraft && !slugTouched) setSlug(toSlug(e.target.value))
+  }
+
+  function handleSlugChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSlugTouched(true)
+    setSlug(e.target.value)
+  }
 
   function handleCoverPick(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []).filter((f) => f.type.startsWith('image/'))
@@ -214,7 +236,9 @@ export function EditExhibitionForm({
           name="title"
           type="text"
           required
-          defaultValue={initialTitle}
+          defaultValue={initialTitle ?? ''}
+          placeholder="전시 제목"
+          onChange={handleTitleChange}
           className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg placeholder:text-muted focus:border-fg focus:outline-none transition-colors"
         />
       </div>
@@ -234,7 +258,7 @@ export function EditExhibitionForm({
                 name="slug"
                 type="text"
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={handleSlugChange}
                 placeholder="light-and-shadow"
                 className={`flex-1 border bg-surface text-fg px-3 py-2.5 text-sm font-mono placeholder:text-muted focus:outline-none transition-colors ${
                   slug && !slugValid
