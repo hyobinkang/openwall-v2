@@ -36,6 +36,21 @@ function ownCoverPaths(formData: FormData, key: string, userId: string) {
   return (formData.getAll(key) as string[]).filter((p) => isOwnCoverPath(p, userId))
 }
 
+// 업로드 사진 파일 삭제 — removeCoverFiles와 같은 방식. 호출 전에 권한 검증을 끝낸 경로만 넘길 것
+async function removeUploadFiles(paths: string[], context: string) {
+  if (paths.length === 0) return
+  const { data, error } = await createAdminClient().storage.from('uploads').remove(paths)
+  if (error) {
+    console.error(`[${context}] uploads remove error:`, error, paths)
+    return
+  }
+  const removed = new Set((data ?? []).map((o) => o.name))
+  const missing = paths.filter((p) => !removed.has(p))
+  if (missing.length > 0) {
+    console.error(`[${context}] uploads not removed (${missing.length}/${paths.length}):`, missing)
+  }
+}
+
 /**
  * 저장 전에 업로드했다가 저장이 실패한 커버를 되돌린다.
  * admin client로 지우기 전에 (1) 현재 사용자 폴더의 파일이고 (2) 어떤 전시의 cover_images에도 없는지 확인한다.
@@ -290,14 +305,22 @@ export async function deleteExhibition(exhibitionId: string): Promise<Exhibition
       .single()
     if (!ex) return { error: '전시를 찾을 수 없습니다.' }
 
-    const { count: uploadCount } = await supabase
+    // 업로드가 없거나 모두 주최자 본인 업로드일 때만 삭제 허용. 비회원(uploader_id null)·다른 사용자 업로드가 있으면 거부.
+    // 삭제 후 정리할 파일 경로도 여기서 미리 조회해 둔다 (행 삭제 시 uploads는 CASCADE로 함께 삭제됨)
+    const admin = createAdminClient()
+    const { data: uploads, error: uploadsError } = await admin
       .from('uploads')
-      .select('*', { count: 'exact', head: true })
+      .select('uploader_id, storage_path')
       .eq('exhibition_id', exhibitionId)
-    if (uploadCount && uploadCount > 0) {
-      return { error: '관람객 기록이 있는 전시는 삭제할 수 없습니다.' }
+    if (uploadsError) {
+      console.error('[deleteExhibition] uploads lookup error:', uploadsError)
+      return { error: '삭제에 실패했습니다.' }
     }
-
+    const othersCount = (uploads ?? []).filter((u) => u.uploader_id !== user.id).length
+    if (othersCount > 0) {
+      return { error: `다른 관람객의 기록 ${othersCount}개가 있어 삭제할 수 없습니다.` }
+    }
+    const uploadPaths = (uploads ?? []).flatMap((u) => (u.storage_path ? [u.storage_path] : []))
     const coverPaths = (ex.cover_images as string[] | null) ?? []
 
     const { data: deleted, error: dbError } = await supabase
@@ -311,8 +334,9 @@ export async function deleteExhibition(exhibitionId: string): Promise<Exhibition
       return { error: '삭제에 실패했습니다.' }
     }
 
-    // 전시 row 삭제가 확인된 뒤 커버 파일 정리 (organizer_id 검증은 위 select/delete에서 완료)
+    // 전시 row 삭제가 확인된 뒤 파일 정리 (organizer_id 검증은 위 select/delete에서 완료)
     await removeCoverFiles(coverPaths, 'deleteExhibition')
+    await removeUploadFiles(uploadPaths, 'deleteExhibition')
 
     revalidatePath('/my')
     redirect('/my')

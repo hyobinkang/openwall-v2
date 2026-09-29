@@ -109,9 +109,7 @@ create policy "Organizers can delete own exhibitions"
 create policy "Anyone can read uploads"
   on public.uploads for select using (true);
 
--- TODO: submitUpload가 admin client로 쓰므로 배포·테스트 후 제거 예정
-create policy "Anyone can insert uploads"
-  on public.uploads for insert with check (true);
+-- insert 정책 없음: 업로드 행은 submitUpload 서버 액션이 권한 확인 후 admin client로만 추가
 
 create policy "Uploader can delete own upload"
   on public.uploads for delete
@@ -119,13 +117,17 @@ create policy "Uploader can delete own upload"
 
 -- ─── Storage Buckets ───────────────────────────────────────
 -- Run these separately if needed (or create via Dashboard > Storage)
-insert into storage.buckets (id, name, public)
-values ('covers', 'covers', true)
-on conflict do nothing;
-
-insert into storage.buckets (id, name, public)
-values ('uploads', 'uploads', true)
-on conflict do nothing;
+-- 두 버킷 모두 10MB, 이미지 7종 (app/actions/uploads.ts의 ALLOWED_IMAGE_TYPES와 동일하게 유지)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values
+  ('covers',  'covers',  true, 10485760,
+   array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif', 'image/avif']),
+  ('uploads', 'uploads', true, 10485760,
+   array['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif', 'image/avif'])
+on conflict (id) do update
+  set public             = excluded.public,
+      file_size_limit    = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
 
 -- Storage policies
 create policy "Public read covers"
@@ -150,7 +152,4 @@ create policy "Public read uploads"
   on storage.objects for select
   using (bucket_id = 'uploads');
 
--- TODO: submitUpload가 admin client로 쓰므로 배포·테스트 후 제거 예정
-create policy "Anyone can upload"
-  on storage.objects for insert
-  with check (bucket_id = 'uploads');
+-- uploads 버킷 insert 정책 없음: submitUpload 서버 액션이 admin client로만 업로드

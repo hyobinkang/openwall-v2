@@ -169,6 +169,12 @@ export function UploadsGrid({
     })
   }
 
+  const allSelected = items.length > 0 && selectedIds.size === items.length
+
+  function toggleSelectAll() {
+    setSelectedIds(allSelected ? new Set() : new Set(items.map((item) => item.id)))
+  }
+
   function exitSelectMode() {
     setSelectMode(false)
     setSelectedIds(new Set())
@@ -201,6 +207,16 @@ export function UploadsGrid({
         <div className="flex items-center justify-end gap-4 mb-4 min-h-[24px]">
           {selectMode ? (
             <>
+              <label className="mr-auto flex items-center gap-2 text-xs text-secondary cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={toggleSelectAll}
+                  disabled={isDeleting}
+                  className="accent-current"
+                />
+                전체 선택
+              </label>
               <span className="text-xs text-secondary">{selectedIds.size}개 선택됨</span>
               <button
                 type="button"
