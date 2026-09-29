@@ -15,7 +15,7 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-bg">
       <header className="sticky top-0 z-10 bg-bg border-b border-subtle">
-        <div className="w-full px-20 py-4 flex items-center justify-between">
+        <div className="w-full page-px py-4 flex items-center justify-between">
           <Link
             href="/dashboard"
             className="text-lg font-bold tracking-tight hover:opacity-70 transition-opacity"
@@ -40,7 +40,7 @@ export default async function DashboardLayout({
           </div>
         </div>
       </header>
-      <main className="w-full px-20 py-10">{children}</main>
+      <main className="w-full page-px py-10">{children}</main>
     </div>
   )
 }

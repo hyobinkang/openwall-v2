@@ -27,7 +27,7 @@ export default async function SettingsPage() {
   return (
     <div className="min-h-screen bg-bg text-fg">
       <header className="border-b border-subtle py-4">
-        <div className="w-full px-20 flex items-center justify-between">
+        <div className="w-full page-px flex items-center justify-between">
           <Link href="/" className="text-base font-bold tracking-tight text-fg">Openwall</Link>
           <form action={logout}>
             <button
@@ -40,7 +40,7 @@ export default async function SettingsPage() {
         </div>
       </header>
 
-      <main className="w-full px-20 py-10 max-w-lg">
+      <main className="w-full page-px py-10 max-w-lg">
         <Link
           href="/my"
           className="text-xs text-secondary hover:text-fg transition-colors"
