@@ -25,6 +25,42 @@ async function removeCoverFiles(paths: string[], context: string) {
   }
 }
 
+// 커버 경로는 반드시 본인 폴더의 파일({userId}/{파일명})이어야 한다.
+// 남의 경로를 cover_images에 넣은 뒤 전시를 삭제해 admin client로 남의 파일을 지우는 것을 막는다.
+function isOwnCoverPath(path: string, userId: string) {
+  const [folder, name, ...rest] = path.split('/')
+  return folder === userId && !!name && rest.length === 0 && name !== '.' && name !== '..'
+}
+
+function ownCoverPaths(formData: FormData, key: string, userId: string) {
+  return (formData.getAll(key) as string[]).filter((p) => isOwnCoverPath(p, userId))
+}
+
+/**
+ * 저장 전에 업로드했다가 저장이 실패한 커버를 되돌린다.
+ * admin client로 지우기 전에 (1) 현재 사용자 폴더의 파일이고 (2) 어떤 전시의 cover_images에도 없는지 확인한다.
+ */
+export async function discardCoverUploads(paths: string[]): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  const candidates = [...new Set(paths)].filter((p) => isOwnCoverPath(p, user.id))
+  if (candidates.length === 0) return
+
+  const { data: referencing, error } = await createAdminClient()
+    .from('exhibitions')
+    .select('cover_images')
+    .overlaps('cover_images', candidates)
+  if (error) {
+    console.error('[discardCoverUploads] reference check error:', error)
+    return // 확인 못 하면 지우지 않는다
+  }
+
+  const referenced = new Set((referencing ?? []).flatMap((e) => (e.cover_images as string[] | null) ?? []))
+  await removeCoverFiles(candidates.filter((p) => !referenced.has(p)), 'discardCoverUploads')
+}
+
 function toSlug(title: string): string {
   const ascii = title
     .toLowerCase()
@@ -49,7 +85,7 @@ export async function createExhibition(
   const slug = (formData.get('slug') as string).trim().toLowerCase()
   const starts_at = (formData.get('starts_at') as string) || null
   const ends_at = (formData.get('ends_at') as string) || null
-  const cover_images = formData.getAll('cover_path') as string[]
+  const cover_images = ownCoverPaths(formData, 'cover_path', user.id)
 
   if (!title) return { error: '전시 제목을 입력해 주세요.' }
   if (!slug) return { error: '슬러그를 입력해 주세요.' }
@@ -94,7 +130,7 @@ export async function saveDraft(
   const description = (formData.get('description') as string | null)?.trim() || null
   const starts_at = (formData.get('starts_at') as string) || null
   const ends_at = (formData.get('ends_at') as string) || null
-  const cover_images = formData.getAll('cover_path') as string[]
+  const cover_images = ownCoverPaths(formData, 'cover_path', user.id)
 
   const slug = `temp-${user.id.slice(0, 8)}-${Date.now().toString(36)}`
 
@@ -153,7 +189,7 @@ export async function updateExhibition(
     const currentPaths = (ex.cover_images as string[] | null) ?? []
     // 클라이언트가 보낸 값 중 이 전시에 실제로 연결된 커버만 삭제 대상으로 인정
     const removePaths = (formData.getAll('remove_cover') as string[]).filter((p) => currentPaths.includes(p))
-    const newPaths = formData.getAll('new_cover_path') as string[]
+    const newPaths = ownCoverPaths(formData, 'new_cover_path', user.id)
     const finalPaths = [
       ...currentPaths.filter((p) => !removePaths.includes(p)),
       ...newPaths,

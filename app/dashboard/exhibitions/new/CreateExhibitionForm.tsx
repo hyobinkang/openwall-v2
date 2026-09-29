@@ -1,20 +1,18 @@
 'use client'
 
-import { useTransition, useRef, useState } from 'react'
+import { useTransition, useRef, useState, useEffect } from 'react'
 import Image from 'next/image'
-import imageCompression from 'browser-image-compression'
-import { createClient } from '@/lib/supabase/client'
 import { createExhibition, saveDraft } from '@/app/actions/exhibitions'
-
-const MAX_COVERS = 9
-
-type CoverItem = {
-  id: string
-  preview: string
-  path: string | null
-  uploading: boolean
-  uploadError: boolean
-}
+import {
+  MAX_COVERS,
+  type PendingCover,
+  createPendingCover,
+  compressCover,
+  uploadCovers,
+  discardUploadedCovers,
+  isRedirect,
+  uploadLabel,
+} from '@/lib/cover-upload'
 
 function toSlug(title: string): string {
   if (!title.trim()) return ''
@@ -33,28 +31,6 @@ function isValidSlug(slug: string) {
   return /^[a-z0-9-]+$/.test(slug) && slug.length > 0
 }
 
-async function uploadToStorage(file: File): Promise<string> {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
-
-  const compressed = await imageCompression(file, {
-    maxSizeMB: 0.5,
-    maxWidthOrHeight: 1024,
-    useWebWorker: true,
-  })
-
-  const ext = file.name.split('.').pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg'
-  const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-
-  const { error } = await supabase.storage.from('covers').upload(path, compressed, {
-    contentType: compressed.type || file.type,
-  })
-  if (error) throw error
-
-  return path
-}
-
 export function CreateExhibitionForm() {
   const [isPending, startTransition] = useTransition()
   const [isDraftPending, startDraftTransition] = useTransition()
@@ -64,12 +40,25 @@ export function CreateExhibitionForm() {
   const [slugTouched, setSlugTouched] = useState(false)
   const [startsAt, setStartsAt] = useState('')
 
-  const [covers, setCovers] = useState<CoverItem[]>([])
+  const [covers, setCovers] = useState<PendingCover[]>([])
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null)
   const coverPickerRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
+  const previewUrlsRef = useRef<Set<string>>(new Set())
 
   const slugValid = isValidSlug(slug)
-  const isUploading = covers.some((c) => c.uploading)
+  const isCompressing = covers.some((c) => c.status === 'compressing')
+  const hasFailedCover = covers.some((c) => c.status === 'error')
+  const isBusy = isPending || isDraftPending
+
+  // 페이지를 떠날 때 남은 미리보기 URL 정리
+  useEffect(() => {
+    const urls = previewUrlsRef.current
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url))
+      urls.clear()
+    }
+  }, [])
 
   function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value
@@ -105,32 +94,24 @@ export function CreateExhibitionForm() {
     }
 
     setError(null)
-    const toAdd = files
 
-    const newItems: CoverItem[] = toAdd.map((f) => ({
-      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-      preview: URL.createObjectURL(f),
-      path: null,
-      uploading: true,
-      uploadError: false,
-    }))
-
+    const newItems = files.map(createPendingCover)
+    newItems.forEach((item) => previewUrlsRef.current.add(item.preview))
     setCovers((prev) => [...prev, ...newItems])
 
-    toAdd.forEach((file, i) => {
+    // 고를 때는 압축만 — 업로드는 저장 버튼을 누를 때
+    files.forEach((file, i) => {
       const itemId = newItems[i].id
-      uploadToStorage(file)
-        .then((path) => {
+      compressCover(file)
+        .then((compressed) => {
           setCovers((prev) =>
-            prev.map((c) => (c.id === itemId ? { ...c, path, uploading: false } : c))
+            prev.map((c) => (c.id === itemId ? { ...c, file: compressed, status: 'ready' } : c))
           )
         })
         .catch((err) => {
-          console.error('[CreateExhibitionForm] cover upload error:', err)
+          console.error('[CreateExhibitionForm] cover compression error:', err)
           setCovers((prev) =>
-            prev.map((c) =>
-              c.id === itemId ? { ...c, uploading: false, uploadError: true } : c
-            )
+            prev.map((c) => (c.id === itemId ? { ...c, status: 'error' } : c))
           )
         })
     })
@@ -139,17 +120,47 @@ export function CreateExhibitionForm() {
   function removeCover(id: string) {
     setCovers((prev) => {
       const item = prev.find((c) => c.id === id)
-      if (item) URL.revokeObjectURL(item.preview)
+      if (item) {
+        URL.revokeObjectURL(item.preview)
+        previewUrlsRef.current.delete(item.preview)
+      }
       return prev.filter((c) => c.id !== id)
     })
   }
 
-  function buildFormData(form: HTMLFormElement): FormData {
-    const fd = new FormData(form)
-    for (const cover of covers) {
-      if (cover.path) fd.append('cover_path', cover.path)
+  // 커버 업로드 → 서버 액션. 업로드 일부 실패나 서버 액션 실패 시 방금 올린 파일 삭제
+  async function submitWithCovers(fd: FormData, action: (fd: FormData) => Promise<{ error?: string }>) {
+    let paths: string[]
+    try {
+      paths = await uploadCovers(covers, (done, total) => setUploadProgress({ done, total }))
+    } catch {
+      setUploadProgress(null)
+      setError('사진 업로드에 실패했습니다. 다시 시도해 주세요.')
+      return
     }
-    return fd
+    setUploadProgress(null)
+    for (const path of paths) fd.append('cover_path', path)
+
+    try {
+      const result = await action(fd)
+      if (result?.error) {
+        await discardUploadedCovers(paths)
+        setError(result.error)
+      }
+    } catch (err) {
+      if (isRedirect(err)) return
+      console.error('[CreateExhibitionForm] save threw:', err)
+      await discardUploadedCovers(paths)
+      setError('저장 중 오류가 발생했습니다. 다시 시도해 주세요.')
+    }
+  }
+
+  function validateCovers(): boolean {
+    if (hasFailedCover) {
+      setError('처리하지 못한 사진이 있습니다. 제거 후 다시 시도해 주세요.')
+      return false
+    }
+    return true
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -161,7 +172,8 @@ export function CreateExhibitionForm() {
       return
     }
 
-    const fd = buildFormData(e.currentTarget)
+    if (!validateCovers()) return
+    const fd = new FormData(e.currentTarget)
 
     const endsAt = fd.get('ends_at') as string
     const startsAtVal = fd.get('starts_at') as string
@@ -170,17 +182,15 @@ export function CreateExhibitionForm() {
       return
     }
 
-    startTransition(async () => {
-      const result = await createExhibition(fd)
-      if (result?.error) setError(result.error)
-    })
+    startTransition(() => submitWithCovers(fd, createExhibition))
   }
 
   function handleDraftSave() {
     setError(null)
     if (!formRef.current) return
 
-    const fd = buildFormData(formRef.current)
+    if (!validateCovers()) return
+    const fd = new FormData(formRef.current)
 
     const endsAt = fd.get('ends_at') as string
     const startsAtVal = fd.get('starts_at') as string
@@ -189,10 +199,7 @@ export function CreateExhibitionForm() {
       return
     }
 
-    startDraftTransition(async () => {
-      const result = await saveDraft(fd)
-      if (result?.error) setError(result.error)
-    })
+    startDraftTransition(() => submitWithCovers(fd, saveDraft))
   }
 
   return (
@@ -325,12 +332,12 @@ export function CreateExhibitionForm() {
                   sizes="(max-width: 512px) 33vw, 160px"
                   className="object-cover"
                 />
-                {cover.uploading && (
+                {cover.status === 'compressing' && (
                   <div className="absolute top-1 right-1 w-5 h-5">
                     <div className="w-full h-full rounded-full border-2 border-fg/20 border-t-fg animate-spin" />
                   </div>
                 )}
-                {cover.uploadError && (
+                {cover.status === 'error' && (
                   <div className="absolute inset-0 bg-bg/60 flex flex-col items-center justify-center gap-1">
                     <span className="text-xs text-red-400">실패</span>
                     <button
@@ -342,7 +349,7 @@ export function CreateExhibitionForm() {
                     </button>
                   </div>
                 )}
-                {!cover.uploading && !cover.uploadError && (
+                {cover.status === 'ready' && !isBusy && (
                   <button
                     type="button"
                     onClick={() => removeCover(cover.id)}
@@ -357,7 +364,7 @@ export function CreateExhibitionForm() {
           </div>
         )}
 
-        {covers.length < MAX_COVERS && (
+        {covers.length < MAX_COVERS && !isBusy && (
           <>
             <input
               ref={coverPickerRef}
@@ -387,18 +394,20 @@ export function CreateExhibitionForm() {
       <button
         type="button"
         onClick={handleDraftSave}
-        disabled={isDraftPending || isPending || isUploading}
+        disabled={isBusy || isCompressing}
         className="w-full border border-subtle py-3 text-sm font-medium tracking-wide text-fg transition-colors hover:border-fg disabled:opacity-40"
       >
-        {isDraftPending ? '저장 중…' : '임시저장'}
+        {isDraftPending ? (uploadProgress ? uploadLabel(uploadProgress) : '저장 중…') : '임시저장'}
       </button>
 
       <button
         type="submit"
-        disabled={isPending || isDraftPending || isUploading || (slug.length > 0 && !slugValid)}
+        disabled={isBusy || isCompressing || (slug.length > 0 && !slugValid)}
         className="w-full bg-fg py-3 text-sm font-medium tracking-wide text-bg transition-colors hover:bg-gray6 disabled:opacity-40"
       >
-        {isPending ? '생성 중…' : isUploading ? '사진 업로드 중…' : '전시 생성하기'}
+        {isPending
+          ? uploadProgress ? uploadLabel(uploadProgress) : '생성 중…'
+          : isCompressing ? '사진 처리 중…' : '전시 생성하기'}
       </button>
     </form>
   )
