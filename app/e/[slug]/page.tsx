@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
+import { formatExhibitionDate, getExhibitionPhase } from '@/lib/exhibition-status'
 import { createClient } from '@/lib/supabase/server'
 import { UploadForm } from './UploadForm'
 
@@ -25,15 +26,6 @@ export async function generateMetadata({
     .single()
 
   return { title: data ? `${data.title} — Openwall` : 'Openwall' }
-}
-
-function formatDate(iso: string | null) {
-  if (!iso) return null
-  return new Date(iso).toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
 }
 
 export default async function ExhibitionVisitorPage({
@@ -64,7 +56,8 @@ export default async function ExhibitionVisitorPage({
     userName = profile?.name ?? user.email?.split('@')[0] ?? null
   }
 
-  const isClosed = exhibition.status === 'closed'
+  const isEnded =
+    getExhibitionPhase({ status: exhibition.status, startsAt: exhibition.starts_at, endsAt: exhibition.ends_at }) === 'ended'
   const isDraft = exhibition.status === 'draft'
 
   return (
@@ -114,8 +107,8 @@ export default async function ExhibitionVisitorPage({
           )}
           {(exhibition.starts_at || exhibition.ends_at) && (
             <p className="mt-2 text-xs text-secondary">
-              {formatDate(exhibition.starts_at)}
-              {exhibition.ends_at && ` — ${formatDate(exhibition.ends_at)}`}
+              {formatExhibitionDate(exhibition.starts_at)}
+              {exhibition.ends_at && ` — ${formatExhibitionDate(exhibition.ends_at)}`}
             </p>
           )}
         </div>
@@ -124,15 +117,20 @@ export default async function ExhibitionVisitorPage({
           <div className="border border-dashed border-subtle px-6 py-8 text-center">
             <p className="text-sm text-secondary">준비 중인 전시입니다.</p>
           </div>
+        ) : isEnded ? (
+          <div className="space-y-3">
+            <div className="px-4 py-3 border border-gray-200 bg-gray-50 text-sm text-gray-500 text-center">
+              이 전시는 종료되었습니다.
+            </div>
+            <Link
+              href={`/e/${slug}/gallery`}
+              className="flex items-center justify-center w-full border border-subtle py-3 text-sm font-medium text-fg hover:border-fg transition-colors"
+            >
+              다른 사람들 리뷰도 보기
+            </Link>
+          </div>
         ) : (
-          <>
-            {isClosed && (
-              <div className="mb-6 px-4 py-3 border border-gray-200 bg-gray-50 text-sm text-gray-500 text-center">
-                이 전시는 종료되었습니다.
-              </div>
-            )}
-            <UploadForm exhibitionId={exhibition.id} isLoggedIn={!!user} userName={userName} slug={slug} />
-          </>
+          <UploadForm exhibitionId={exhibition.id} isLoggedIn={!!user} userName={userName} slug={slug} />
         )}
       </main>
     </div>

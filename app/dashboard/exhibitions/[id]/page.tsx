@@ -6,44 +6,12 @@ import { createClient } from '@/lib/supabase/server'
 import { QRCodeDisplay } from './QRCodeDisplay'
 import { DeleteExhibitionButton } from './DeleteExhibitionButton'
 import { CloseExhibitionButton } from './CloseExhibitionButton'
-import type { Exhibition } from '@/lib/supabase/types'
+import { getExhibitionStatusInfo, formatExhibitionDate } from '@/lib/exhibition-status'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
 function coverUrl(path: string) {
   return `${SUPABASE_URL}/storage/v1/object/public/covers/${path}`
-}
-
-function parseEndsAt(endsAt: string | null): Date | null {
-  if (!endsAt) return null
-  const d = new Date(endsAt)
-  // ends_at이 00:00:00+00 (자정 UTC)으로 저장되므로 하루 끝(23:59:59 KST = 14:59:59 UTC)으로 보정
-  // 즉 UTC 기준으로 하루(86400초 - 1초)를 더해줌
-  return new Date(d.getTime() + (24 * 60 * 60 * 1000 - 1000))
-}
-
-function getStatusInfo(ex: Exhibition) {
-  const now = new Date()
-  if (ex.status === 'draft') {
-    return { label: '임시저장', className: 'border border-white text-white bg-black' }
-  }
-  const endsAt = parseEndsAt(ex.ends_at)
-  if (ex.status === 'closed' || (endsAt && endsAt < now)) {
-    return { label: '종료', className: 'border border-gray-500 text-gray-500 bg-black' }
-  }
-  if (ex.starts_at && new Date(ex.starts_at) > now) {
-    return { label: '진행 전', className: 'border border-blue-400 text-blue-400 bg-black' }
-  }
-  return { label: '진행 중', className: 'border border-green-400 text-green-400 bg-black' }
-}
-
-function formatDate(iso: string | null) {
-  if (!iso) return null
-  return new Date(iso).toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
 }
 
 export default async function ExhibitionDetailPage({
@@ -76,7 +44,7 @@ export default async function ExhibitionDetailPage({
   const proto = process.env.NODE_ENV === 'production' ? 'https' : 'http'
   const exhibitionUrl = `${proto}://${host}/e/${ex.slug}`
 
-  const statusInfo = getStatusInfo(ex as Exhibition)
+  const statusInfo = getExhibitionStatusInfo({ status: ex.status, startsAt: ex.starts_at, endsAt: ex.ends_at })
   const isClosed = ex.status === 'closed'
 
   return (
@@ -102,7 +70,7 @@ export default async function ExhibitionDetailPage({
             </span>
             {(ex.starts_at || ex.ends_at) && (
               <span className="text-xs text-secondary">
-                {formatDate(ex.starts_at)} {ex.ends_at && `— ${formatDate(ex.ends_at)}`}
+                {formatExhibitionDate(ex.starts_at)} {ex.ends_at && `— ${formatExhibitionDate(ex.ends_at)}`}
               </span>
             )}
             <span className="text-xs text-secondary">

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { UploadModal, type ModalUploadItem } from '@/app/components/UploadModal'
 import { deleteUploads } from '@/app/actions/uploads'
+import { getExhibitionStatusInfo } from '@/lib/exhibition-status'
 
 export type HostedExhibition = {
   id: string
@@ -32,34 +33,12 @@ export type ParticipatedGroup = {
   items: UploadItem[]
 }
 
-function parseEndsAt(endsAt: string | null): Date | null {
-  if (!endsAt) return null
-  const d = new Date(endsAt)
-  // ends_at이 00:00:00+00 (자정 UTC)으로 저장되므로 하루 끝(23:59:59 KST = 14:59:59 UTC)으로 보정
-  // 즉 UTC 기준으로 하루(86400초 - 1초)를 더해줌
-  return new Date(d.getTime() + (24 * 60 * 60 * 1000 - 1000))
-}
-
-function getStatusInfo(ex: HostedExhibition): { label: string; className: string } {
-  const now = new Date()
-  if (ex.status === 'draft') {
-    return { label: '임시저장', className: 'border border-white text-white bg-black' }
-  }
-  const endsAt = parseEndsAt(ex.endsAt)
-  if (ex.status === 'closed' || (endsAt && endsAt < now)) {
-    return { label: '종료', className: 'border border-gray-500 text-gray-500 bg-black' }
-  }
-  if (ex.startsAt && new Date(ex.startsAt) > now) {
-    return { label: '진행 전', className: 'border border-blue-400 text-blue-400 bg-black' }
-  }
-  return { label: '진행 중', className: 'border border-green-400 text-green-400 bg-black' }
-}
-
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
+    timeZone: 'Asia/Seoul',
   })
 }
 
@@ -171,7 +150,7 @@ export function MyPageTabs({
                     <p className="text-xs text-secondary mt-0.5">{formatDate(ex.createdAt)}</p>
                   </div>
                   {(() => {
-                    const info = getStatusInfo(ex)
+                    const info = getExhibitionStatusInfo(ex)
                     return (
                       <span className={`text-sm font-medium px-3 py-1 rounded-full ml-4 shrink-0 ${info.className}`}>
                         {info.label}

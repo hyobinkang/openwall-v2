@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import QRCode from 'react-qr-code'
+import { formatExhibitionDate } from '@/lib/exhibition-status'
 
 interface Props {
   url: string
@@ -9,12 +10,6 @@ interface Props {
   title: string
   startsAt: string | null
   endsAt: string | null
-}
-
-function formatPosterDate(iso: string | null): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
 }
 
 function svgToImage(svgEl: SVGElement): Promise<HTMLImageElement> {
@@ -100,8 +95,8 @@ export function QRCodeDisplay({ url, slug, title, startsAt, endsAt }: Props) {
     }
 
     // Date
-    const startStr = formatPosterDate(startsAt)
-    const endStr = formatPosterDate(endsAt)
+    const startStr = formatExhibitionDate(startsAt, 'dot')
+    const endStr = formatExhibitionDate(endsAt, 'dot')
     const dateStr =
       startStr && endStr ? `${startStr} — ${endStr}`
       : startStr || endStr || ''

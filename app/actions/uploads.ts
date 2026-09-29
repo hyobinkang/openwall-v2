@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getExhibitionPhase } from '@/lib/exhibition-status'
 
 export type UploadState = {
   error?: string
@@ -27,6 +28,18 @@ export async function submitUpload(
 ): Promise<UploadState> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+
+  // 종료된 전시(status closed 또는 종료일 경과)는 신규 업로드·수정 모두 거부. 시작 전(upcoming)은 허용.
+  // RLS상 closed 전시는 방문자가 조회할 수 없으므로 admin 클라이언트로 확인한다.
+  const { data: exhibition } = await createAdminClient()
+    .from('exhibitions')
+    .select('status, starts_at, ends_at')
+    .eq('id', exhibitionId)
+    .single()
+  if (!exhibition) return { error: '전시를 찾을 수 없습니다.' }
+  if (getExhibitionPhase({ status: exhibition.status, startsAt: exhibition.starts_at, endsAt: exhibition.ends_at }) === 'ended') {
+    return { error: '종료된 전시입니다' }
+  }
 
   const updateId = (formData.get('upload_id') as string)?.trim() || null
   const keepStoragePath = (formData.get('existing_storage_path') as string)?.trim() || null
