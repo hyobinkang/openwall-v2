@@ -86,9 +86,10 @@ create policy "Users can update own profile"
   on public.profiles for update using (auth.uid() = id);
 
 -- exhibitions
-create policy "Anyone can read active exhibitions"
+-- closed 전시도 방문자에게 공개 (종료 안내 + 갤러리 열람). draft는 주최자만.
+create policy "Anyone can read active or closed exhibitions"
   on public.exhibitions for select
-  using (status = 'active' or organizer_id = auth.uid());
+  using (status in ('active', 'closed') or organizer_id = auth.uid());
 
 create policy "Organizers can insert exhibitions"
   on public.exhibitions for insert
