@@ -37,10 +37,6 @@ input[type="date"] {
   color-scheme: dark;
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-}
-
 body {
   background: var(--colors-background);
   color: var(--colors-foreground);
