@@ -73,6 +73,7 @@ export type Database = {
           storage_path: string | null
           text_content: string | null
           caption: string | null
+          edit_token_hash: string | null
           created_at: string
         }
         Insert: {
@@ -84,6 +85,7 @@ export type Database = {
           storage_path?: string | null
           text_content?: string | null
           caption?: string | null
+          edit_token_hash?: string | null
           created_at?: string
         }
         Update: {
@@ -93,6 +95,7 @@ export type Database = {
           storage_path?: string | null
           text_content?: string | null
           caption?: string | null
+          edit_token_hash?: string | null
         }
         Relationships: [
           {

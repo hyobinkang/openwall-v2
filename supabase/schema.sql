@@ -24,7 +24,8 @@ create table public.exhibitions (
   title            text not null,
   description      text,
   slug             text not null unique,           -- used in QR code URL: /e/[slug]
-  cover_image_path text,                           -- Supabase Storage path
+  cover_image_path text,                           -- (legacy) 단일 커버 경로, 현재 미사용
+  cover_images     text[],                         -- covers 버킷 경로 목록 ({organizer_id}/{파일명})
   status           text not null default 'active'  -- 'draft' | 'active' | 'closed'
                    check (status in ('draft', 'active', 'closed')),
   starts_at        timestamptz,
@@ -43,6 +44,7 @@ create table public.uploads (
   storage_path   text,                              -- Supabase Storage path (photos only)
   text_content   text,                              -- text type content
   caption        text,
+  edit_token_hash text,                             -- 비회원 수정·귀속 토큰의 SHA-256(hex). 회원 업로드·귀속 후에는 null
   created_at     timestamptz not null default now()
 );
 
@@ -107,8 +109,9 @@ create policy "Organizers can delete own exhibitions"
 create policy "Anyone can read uploads"
   on public.uploads for select using (true);
 
+-- TODO: submitUpload가 admin client로 쓰므로 배포·테스트 후 제거 예정
 create policy "Anyone can insert uploads"
-  on public.uploads for insert with check (true);  -- visitors (incl. anonymous) can upload
+  on public.uploads for insert with check (true);
 
 create policy "Uploader can delete own upload"
   on public.uploads for delete
@@ -129,14 +132,25 @@ create policy "Public read covers"
   on storage.objects for select
   using (bucket_id = 'covers');
 
-create policy "Authenticated upload covers"
-  on storage.objects for insert
-  with check (bucket_id = 'covers' and auth.role() = 'authenticated');
+-- covers: 로그인 사용자가 본인 폴더({user.id}/...)에만 쓰기·수정·삭제
+create policy "Owners can upload covers"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'covers' and (storage.foldername(name))[1] = auth.uid()::text);
+
+create policy "Owners can update covers"
+  on storage.objects for update to authenticated
+  using      (bucket_id = 'covers' and (storage.foldername(name))[1] = auth.uid()::text)
+  with check (bucket_id = 'covers' and (storage.foldername(name))[1] = auth.uid()::text);
+
+create policy "Users delete own covers"
+  on storage.objects for delete to authenticated
+  using (bucket_id = 'covers' and (storage.foldername(name))[1] = auth.uid()::text);
 
 create policy "Public read uploads"
   on storage.objects for select
   using (bucket_id = 'uploads');
 
+-- TODO: submitUpload가 admin client로 쓰므로 배포·테스트 후 제거 예정
 create policy "Anyone can upload"
   on storage.objects for insert
   with check (bucket_id = 'uploads');

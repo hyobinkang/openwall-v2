@@ -87,7 +87,7 @@ uploads           id · type · storage_path · text_content · guest_name · cr
 ### 2. Upload size limit
 **Problem:** Photo uploads from phone cameras were rejected.
 **Cause:** Vercel limits Server Action request bodies to ~4.5 MB; high-res phone photos routinely exceed this.
-**Solution:** Compress images client-side with `browser-image-compression` (max 0.5 MB, max 1024 px) before the form submits.
+**Solution:** Compress images client-side with `browser-image-compression` before they leave the browser. Visitor photos (sent through a Server Action) are compressed to max 2 MB / 2048 px and capped at 4 MB per request; cover images (max 0.5 MB / 1024 px) upload directly to Supabase Storage on save, bypassing the function body limit.
 
 ### 3. Account deletion design
 **Problem:** Deleting a user must cleanly remove owned data, anonymise other contributions, and clean up Storage — without leaving orphaned files or exposing the service role key to the client.

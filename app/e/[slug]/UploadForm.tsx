@@ -1,11 +1,33 @@
 'use client'
 
-import { useActionState, useEffect, useMemo, useState, useRef } from 'react'
+import { useActionState, useEffect, useMemo, useState, useRef, startTransition } from 'react'
+import imageCompression from 'browser-image-compression'
 import { submitUpload } from '@/app/actions/uploads'
 import { createClient } from '@/lib/supabase/client'
-import type { UploadState } from '@/app/actions/uploads'
+import type { UploadState, PendingUpload } from '@/app/actions/uploads'
 
 const MAX_MB = 10
+// Vercel Functions 요청 본문 한도(4.5MB)보다 작게 — 서버 액션으로 보내는 최종 파일 크기 상한
+const MAX_SEND_BYTES = 4 * 1024 * 1024
+
+// 방문자 사진은 서버 액션을 거치므로 전송 전에 브라우저에서 압축한다.
+// GIF는 압축하면 첫 프레임만 남으므로 원본을 보낸다. 압축 실패(예: Chrome의 HEIC) 시에도 한도 이내면 원본 전송.
+async function preparePhoto(file: File): Promise<File> {
+  if (file.type !== 'image/gif') {
+    try {
+      const compressed = await imageCompression(file, {
+        maxSizeMB: 2,
+        maxWidthOrHeight: 2048,
+        useWebWorker: true,
+      })
+      if (compressed.size <= MAX_SEND_BYTES) return new File([compressed], file.name, { type: compressed.type })
+    } catch (err) {
+      console.error('[UploadForm] photo compression error:', err)
+    }
+  }
+  if (file.size <= MAX_SEND_BYTES) return file
+  throw new Error('PHOTO_TOO_LARGE')
+}
 
 function GoogleSignInButton() {
   const [loading, setLoading] = useState(false)
@@ -38,6 +60,7 @@ function GoogleSignInButton() {
 
 type SavedData = {
   uploadId: string
+  editToken: string | null
   isLoggedIn: boolean
   storagePath: string | null
   textContent: string | null
@@ -48,30 +71,31 @@ type SavedData = {
 function SuccessView({
   isLoggedIn,
   uploadId,
+  editToken,
   slug,
   onEditAgain,
 }: {
   isLoggedIn: boolean
   uploadId?: string
+  editToken: string | null
   slug: string
   onEditAgain: () => void
 }) {
-  // 비회원 uploadId를 sessionStorage에 저장 → /my에서 귀속 처리
+  // 비회원 업로드 id + 수정 토큰을 sessionStorage에 저장 → /my에서 귀속 처리
   useEffect(() => {
-    console.log('[UploadForm] SuccessView mounted', { isLoggedIn, uploadId })
-    if (isLoggedIn || !uploadId) {
-      console.log('[UploadForm] sessionStorage 저장 건너뜀 (isLoggedIn 또는 uploadId 없음)')
-      return
-    }
+    if (isLoggedIn || !uploadId || !editToken) return
     try {
-      const prev: string[] = JSON.parse(sessionStorage.getItem('pendingUploads') ?? '[]')
-      const next = prev.includes(uploadId) ? prev : [...prev, uploadId]
+      const raw: unknown = JSON.parse(sessionStorage.getItem('pendingUploads') ?? '[]')
+      // 토큰 없는 예전 형식(string[]) 항목은 어차피 귀속 불가라 버린다
+      const prev = (Array.isArray(raw) ? raw : []).filter(
+        (p): p is PendingUpload => typeof p?.id === 'string' && typeof p?.token === 'string'
+      )
+      const next = prev.some((p) => p.id === uploadId) ? prev : [...prev, { id: uploadId, token: editToken }]
       sessionStorage.setItem('pendingUploads', JSON.stringify(next))
-      console.log('[UploadForm] sessionStorage pendingUploads 저장 완료:', next)
     } catch (e) {
       console.error('[UploadForm] sessionStorage 저장 실패:', e)
     }
-  }, [isLoggedIn, uploadId])
+  }, [isLoggedIn, uploadId, editToken])
 
   return (
     <div className="space-y-6">
@@ -163,6 +187,7 @@ export function UploadForm({
   const [hasText, setHasText] = useState(false)
   const [hasPhoto, setHasPhoto] = useState(false)
   const [clientError, setClientError] = useState<string | null>(null)
+  const [compressing, setCompressing] = useState(false)
   const [nameMode, setNameMode] = useState<NameMode>('member')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -175,6 +200,7 @@ export function UploadForm({
     if (!state.nonce) return
     setSavedData({
       uploadId: state.uploadId ?? '',
+      editToken: state.editToken ?? null,
       isLoggedIn: state.isLoggedIn ?? isLoggedIn,
       storagePath: state.storagePath ?? null,
       textContent: state.textContent ?? null,
@@ -212,6 +238,7 @@ export function UploadForm({
       <SuccessView
         isLoggedIn={savedData.isLoggedIn}
         uploadId={savedData.uploadId}
+        editToken={savedData.editToken}
         slug={slug}
         onEditAgain={() => {
           setShowSuccess(false)
@@ -250,21 +277,42 @@ export function UploadForm({
 
   const error = clientError ?? state.error
 
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!hasPhoto && !hasText) {
+      setClientError('사진 또는 텍스트 중 하나는 입력해야 합니다.')
+      return
+    }
+    setClientError(null)
+
+    const fd = new FormData(e.currentTarget)
+    const photo = fd.get('photo')
+    if (photo instanceof File && photo.size > 0) {
+      setCompressing(true)
+      try {
+        fd.set('photo', await preparePhoto(photo))
+      } catch {
+        setClientError('사진을 처리할 수 없습니다. JPG 또는 PNG 사진으로 다시 시도해 주세요.')
+        return
+      } finally {
+        setCompressing(false)
+      }
+    }
+    startTransition(() => formAction(fd))
+  }
+
   return (
     <form
-      action={formAction}
       className="space-y-6"
-      onSubmit={(e) => {
-        if (!hasPhoto && !hasText) {
-          e.preventDefault()
-          setClientError('사진 또는 텍스트 중 하나는 입력해야 합니다.')
-        }
-      }}
+      onSubmit={handleSubmit}
     >
       {/* 편집 모드 hidden fields */}
       {isEditing && savedData && (
         <>
           <input type="hidden" name="upload_id" value={savedData.uploadId} />
+          {savedData.editToken && (
+            <input type="hidden" name="edit_token" value={savedData.editToken} />
+          )}
           {existingStoragePath && (
             <input type="hidden" name="existing_storage_path" value={existingStoragePath} />
           )}
@@ -425,10 +473,12 @@ export function UploadForm({
 
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || compressing}
         className="w-full bg-fg py-3 text-sm font-medium tracking-wide text-bg hover:bg-gray6 transition-colors disabled:opacity-40"
       >
-        {pending ? (isEditing ? '수정 중…' : '업로드 중…') : (isEditing ? '수정하기' : '업로드하기')}
+        {compressing
+          ? '사진 처리 중…'
+          : pending ? (isEditing ? '수정 중…' : '업로드 중…') : (isEditing ? '수정하기' : '업로드하기')}
       </button>
     </form>
   )

@@ -2,30 +2,22 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { claimUploads } from '@/app/actions/uploads'
+import { claimUploads, type PendingUpload } from '@/app/actions/uploads'
 
 export function ClaimUploads() {
   const router = useRouter()
 
   useEffect(() => {
     async function run() {
-      const raw = sessionStorage.getItem('pendingUploads')
-      console.log('[ClaimUploads] 실행됨. sessionStorage pendingUploads:', raw)
-
       try {
-        if (!raw) {
-          console.log('[ClaimUploads] pendingUploads 없음 — 종료')
-          return
-        }
-        const ids: string[] = JSON.parse(raw)
-        if (!ids.length) {
-          console.log('[ClaimUploads] ids 배열 비어있음 — 종료')
-          return
-        }
-        console.log('[ClaimUploads] claimUploads 호출 시작:', ids)
+        const raw: unknown = JSON.parse(sessionStorage.getItem('pendingUploads') ?? '[]')
+        // 토큰이 있는 항목만 전송 — 예전 형식(id만 저장)은 서버에서도 귀속 불가
+        const items = (Array.isArray(raw) ? raw : []).filter(
+          (p): p is PendingUpload => typeof p?.id === 'string' && typeof p?.token === 'string'
+        )
         sessionStorage.removeItem('pendingUploads')
-        await claimUploads(ids)
-        console.log('[ClaimUploads] claimUploads 완료, router.refresh() 호출')
+        if (!items.length) return
+        await claimUploads(items)
         router.refresh()
       } catch (e) {
         console.error('[ClaimUploads] 오류:', e)
