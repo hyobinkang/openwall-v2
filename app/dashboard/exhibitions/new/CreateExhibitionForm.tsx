@@ -283,7 +283,7 @@ export function CreateExhibitionForm() {
             type="date"
             value={startsAt}
             onChange={(e) => setStartsAt(e.target.value)}
-            className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors"
+            className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer"
           />
         </div>
         <div className="space-y-1.5">
@@ -298,7 +298,7 @@ export function CreateExhibitionForm() {
             name="ends_at"
             type="date"
             onChange={handleEndsAtChange}
-            className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors"
+            className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:cursor-pointer"
           />
         </div>
       </div>

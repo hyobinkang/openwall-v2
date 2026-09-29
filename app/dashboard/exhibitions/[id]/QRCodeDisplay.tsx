@@ -129,7 +129,7 @@ export function QRCodeDisplay({ url, slug, title, startsAt, endsAt }: Props) {
     ctx.fillStyle = '#333333'
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
-    ctx.fillText('QR을 스캔해 사진과 감상을 남겨주세요', W / 2, qrY + qrSize + 64)
+    ctx.fillText('Scan to add to the wall.', W / 2, qrY + qrSize + 64)
 
     // "openwall.co" — bottom-right inside border
     ctx.font = `400 38px -apple-system, "Helvetica Neue", Arial, sans-serif`

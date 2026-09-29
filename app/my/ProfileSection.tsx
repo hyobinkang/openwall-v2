@@ -1,14 +1,17 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import { updateProfileName } from '@/app/actions/profile'
 
 export function ProfileSection({
   initialName,
   joinedAt,
+  settingsHref,
 }: {
   initialName: string | null
   joinedAt: string
+  settingsHref?: string
 }) {
   const [name, setName] = useState(initialName ?? '')
   const [inputValue, setInputValue] = useState(initialName ?? '')
@@ -81,12 +84,21 @@ export function ProfileSection({
             <span className="text-base font-semibold text-fg">
               {name || '(이름 없음)'}
             </span>
-            <button
-              onClick={handleEdit}
-              className="text-xs text-secondary hover:text-secondary transition-colors"
-            >
-              수정
-            </button>
+            {settingsHref ? (
+              <Link
+                href={settingsHref}
+                className="text-xs text-secondary hover:text-fg transition-colors"
+              >
+                설정
+              </Link>
+            ) : (
+              <button
+                onClick={handleEdit}
+                className="text-xs text-secondary hover:text-secondary transition-colors"
+              >
+                수정
+              </button>
+            )}
           </>
         )}
       </div>
