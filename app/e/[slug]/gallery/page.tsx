@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { getExhibitionPhase } from '@/lib/exhibition-status'
 import { UploadsGrid, type UploadItem } from '@/app/dashboard/exhibitions/[id]/uploads/UploadsGrid'
 import { MyUploadsSection, type MyUploadCardItem } from './MyUploadsSection'
 
@@ -25,11 +26,14 @@ export default async function ExhibitionGalleryPage({
 
   const { data: exhibition } = await supabase
     .from('exhibitions')
-    .select('id, title, status')
+    .select('id, title, status, starts_at, ends_at')
     .eq('slug', slug)
     .single()
 
   if (!exhibition) notFound()
+
+  const phase = getExhibitionPhase({ status: exhibition.status, startsAt: exhibition.starts_at, endsAt: exhibition.ends_at })
+  const canUpload = phase === 'ongoing' || phase === 'upcoming'
 
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -138,7 +142,7 @@ export default async function ExhibitionGalleryPage({
         )}
 
         {/* 비로그인 또는 업로드 없는 로그인 유저 → 업로드 유도 */}
-        {exhibition.status === 'active' && myUploads.length === 0 && (
+        {canUpload && myUploads.length === 0 && (
           <div className="mt-10 text-center">
             <Link
               href={`/e/${slug}`}
