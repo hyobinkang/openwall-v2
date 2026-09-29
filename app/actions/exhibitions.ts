@@ -1,11 +1,29 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { isRedirectError } from 'next/dist/client/components/redirect-error'
 
 export type ExhibitionState = { error?: string }
+
+// 커버 파일 삭제 — 호출 전에 organizer_id 검증을 끝낸 경로만 넘길 것.
+// 사용자 client로 remove()하면 RLS에 막혀도 { data: [], error: null }로 조용히 실패하므로 admin client로 지우고,
+// 실제 삭제된 개수까지 확인해 로그를 남긴다.
+async function removeCoverFiles(paths: string[], context: string) {
+  if (paths.length === 0) return
+  const { data, error } = await createAdminClient().storage.from('covers').remove(paths)
+  if (error) {
+    console.error(`[${context}] covers remove error:`, error, paths)
+    return
+  }
+  const removed = new Set((data ?? []).map((o) => o.name))
+  const missing = paths.filter((p) => !removed.has(p))
+  if (missing.length > 0) {
+    console.error(`[${context}] covers not removed (${missing.length}/${paths.length}):`, missing)
+  }
+}
 
 function toSlug(title: string): string {
   const ascii = title
@@ -132,14 +150,10 @@ export async function updateExhibition(
 
     if (!ex) return { error: '전시를 찾을 수 없습니다.' }
 
-    const removePaths = formData.getAll('remove_cover') as string[]
-    if (removePaths.length > 0) {
-      const { error: removeErr } = await supabase.storage.from('covers').remove(removePaths)
-      if (removeErr) console.error('[updateExhibition] storage remove error:', removeErr)
-    }
-
-    const newPaths = formData.getAll('new_cover_path') as string[]
     const currentPaths = (ex.cover_images as string[] | null) ?? []
+    // 클라이언트가 보낸 값 중 이 전시에 실제로 연결된 커버만 삭제 대상으로 인정
+    const removePaths = (formData.getAll('remove_cover') as string[]).filter((p) => currentPaths.includes(p))
+    const newPaths = formData.getAll('new_cover_path') as string[]
     const finalPaths = [
       ...currentPaths.filter((p) => !removePaths.includes(p)),
       ...newPaths,
@@ -184,6 +198,9 @@ export async function updateExhibition(
       }
       return { error: '수정에 실패했습니다. 다시 시도해 주세요.' }
     }
+
+    // DB 반영이 성공한 뒤에 파일 삭제 — 실패 시 DB가 없는 파일을 가리키지 않도록
+    await removeCoverFiles(removePaths, 'updateExhibition')
 
     updatedId = id
   } catch (err: unknown) {
@@ -246,19 +263,20 @@ export async function deleteExhibition(exhibitionId: string): Promise<Exhibition
     }
 
     const coverPaths = (ex.cover_images as string[] | null) ?? []
-    if (coverPaths.length > 0) {
-      await supabase.storage.from('covers').remove(coverPaths)
-    }
 
-    const { error: dbError } = await supabase
+    const { data: deleted, error: dbError } = await supabase
       .from('exhibitions')
       .delete()
       .eq('id', exhibitionId)
       .eq('organizer_id', user.id)
-    if (dbError) {
-      console.error('[deleteExhibition] db error:', dbError)
+      .select('id')
+    if (dbError || !deleted?.length) {
+      console.error('[deleteExhibition] db error:', dbError ?? 'no rows deleted')
       return { error: '삭제에 실패했습니다.' }
     }
+
+    // 전시 row 삭제가 확인된 뒤 커버 파일 정리 (organizer_id 검증은 위 select/delete에서 완료)
+    await removeCoverFiles(coverPaths, 'deleteExhibition')
 
     revalidatePath('/my')
     redirect('/my')
