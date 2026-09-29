@@ -10,7 +10,7 @@ Organizers create an exhibition and receive a unique QR code. Visitors scan the 
 
 | Visitor page | My page | QR poster |
 |---|---|---|
-| ![Visitor page](docs/screenshots/visitor-page.png) | ![My page](docs/screenshots/my-page.png) | ![QR poster](docs/screenshots/qr-poster.png) |
+| ![Visitor page](docs/screenshots/visitor-page.jpg) | ![My page](docs/screenshots/my-page.png) | ![QR poster](docs/screenshots/qr-poster.png) |
 
 ---
 
