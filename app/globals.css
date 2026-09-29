@@ -37,6 +37,10 @@ input[type="date"] {
   color-scheme: dark;
 }
 
+input[type="date"]::-webkit-date-and-time-value {
+  text-align: left;
+}
+
 @layer utilities {
   .page-px {
     padding-left: 1.25rem; /* px-5 */

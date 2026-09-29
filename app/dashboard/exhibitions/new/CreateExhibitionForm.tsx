@@ -270,7 +270,7 @@ export function CreateExhibitionForm() {
 
       {/* 기간 */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           <label
             htmlFor="starts_at"
             className="block text-xs font-medium uppercase tracking-widest text-secondary"
@@ -283,10 +283,10 @@ export function CreateExhibitionForm() {
             type="date"
             value={startsAt}
             onChange={(e) => setStartsAt(e.target.value)}
-            className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+            className="block h-[42px] w-full min-w-0 appearance-none border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer"
           />
         </div>
-        <div className="space-y-1.5">
+        <div className="min-w-0 space-y-1.5">
           <label
             htmlFor="ends_at"
             className="block text-xs font-medium uppercase tracking-widest text-secondary"
@@ -298,7 +298,7 @@ export function CreateExhibitionForm() {
             name="ends_at"
             type="date"
             onChange={handleEndsAtChange}
-            className="w-full border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+            className="block h-[42px] w-full min-w-0 appearance-none border border-subtle bg-surface px-3 py-2.5 text-sm text-fg focus:border-fg focus:outline-none transition-colors [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:cursor-pointer"
           />
         </div>
       </div>
