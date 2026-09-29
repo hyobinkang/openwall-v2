@@ -5,6 +5,7 @@ import { logout } from '@/app/actions/auth'
 import { ClaimUploads } from './ClaimUploads'
 import { ProfileSection } from './ProfileSection'
 import { MyPageTabs, type HostedExhibition, type ParticipatedGroup, type UploadItem } from './MyPageTabs'
+import { DeleteAccountButton } from './DeleteAccountButton'
 
 function toKST(iso: string) {
   return new Date(iso).toLocaleString('ko-KR', {
@@ -111,6 +112,9 @@ export default async function MyPage() {
       <main className="w-full px-20 py-10">
         <ProfileSection initialName={myProfileName} joinedAt={user.created_at} />
         <MyPageTabs hosted={hosted} participated={participated} />
+        <div className="mt-16 pb-10">
+          <DeleteAccountButton />
+        </div>
       </main>
     </div>
   )

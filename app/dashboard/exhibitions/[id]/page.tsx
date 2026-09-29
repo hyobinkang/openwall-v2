@@ -162,7 +162,13 @@ export default async function ExhibitionDetailPage({
           </p>
         ) : (
           <>
-            <QRCodeDisplay url={exhibitionUrl} slug={ex.slug} />
+            <QRCodeDisplay
+            url={exhibitionUrl}
+            slug={ex.slug}
+            title={ex.title}
+            startsAt={ex.starts_at ?? null}
+            endsAt={ex.ends_at ?? null}
+          />
             <p className="mt-6 text-xs text-center text-secondary">
               관람객이 이 QR을 스캔하면 사진·텍스트를 업로드할 수 있습니다.
             </p>

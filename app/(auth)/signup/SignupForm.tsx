@@ -99,7 +99,7 @@ export function SignupForm({ redirectTo }: { redirectTo?: string }) {
         disabled={pending}
         className="w-full bg-fg py-3 text-sm font-medium tracking-wide text-bg transition-colors hover:bg-gray6 disabled:opacity-40"
       >
-        {pending ? '가입 중…' : '시작하기'}
+        {pending ? '가입 중…' : '가입하기'}
       </button>
 
       <p className="text-center text-sm text-secondary">
